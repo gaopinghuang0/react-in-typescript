@@ -1,7 +1,12 @@
 import { render } from './MyReact';
 
 
-render();
+render('hello world', document.getElementById('root'));
+
+
+// createElement
+// render
+// 
 
 
 // If you want to start measuring performance in your app, pass a function

@@ -1,11 +1,10 @@
-import { ReactElement } from "./ReactElement";
 
 class Component {
 
-    render(): ReactElement {
+    // render(): ReactElement {
 
-        return null;
-    }
+    //     return null;
+    // }
 }
 
 export default Component;
