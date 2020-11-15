@@ -1,7 +1,21 @@
 import { render } from './MyReact';
+import { ReactHostElement } from './MyReact/types';
 
-
-render('hello world', document.getElementById('root'));
+const element1: ReactHostElement = {
+    type: 'a',
+    props: {
+        href: 'http://www.baidu.com',
+        children: [{
+            type: 'button',
+            props: {
+                className: 'btn',
+                children: ['this is a button']
+            },
+        },
+            'hyperscript']
+    }
+};
+render(element1, document.getElementById('root'));
 
 
 // createElement
