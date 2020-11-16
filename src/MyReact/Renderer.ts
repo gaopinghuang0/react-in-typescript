@@ -1,42 +1,49 @@
-import { ReactElement, ReactHostElement, ReactComponentElement, ReactText } from "./types";
+import { ReactComponentElement, ReactHostElement, ReactNodeList, ReactText } from "./types";
 
 
-export const render = (element: ReactElement | ReactText, container: Node | null | undefined) => {
+export const render = (element: ReactNodeList, container: Node | null | undefined) => {
     if (container == null) return;
 
     // For the first time, mount the element, otherwise update.
     mount(element, container);
 }
 
-function mount(element: ReactElement | ReactText, container: Node) {
-    const node = instantiateComponent(element);
+function mount(element: ReactNodeList, container: Node) {
+    renderElement(element, container);
+}
+
+function renderElement(element: ReactNodeList, container: Node) {
+    if (element == null || typeof element === 'boolean') {
+        return;
+    }
+    if (typeof element === 'string' || typeof element === 'number') {
+        return renderText(element, container);
+    }
+
+    const type = typeof (element as any).type;
+    switch (type) {
+        case 'string':
+            return renderHostElement(element as ReactHostElement, container);
+        default:
+            return renderCompositeElement(element as ReactComponentElement, container);
+    }
+}
+
+function renderText(element: ReactText, container: Node) {
+    const node = document.createTextNode(element.toString());
     container.appendChild(node);
 }
 
-function instantiateComponent(element: ReactElement | ReactText): Node {
-    if (typeof element === 'string' || typeof element === 'number') {
-        return createText(element);
-    }
-
-    const type = typeof element.type;
-    switch (type) {
-        case 'string':
-            return createHostElement(element as ReactHostElement);
-        default:
-            return createCompositeElement(element as ReactComponentElement);
-    }
-}
-
-function createText(element: ReactText): Node {
-    return document.createTextNode(element.toString());
-}
-
-function createHostElement(element: ReactHostElement): Node {
+function renderHostElement(element: ReactHostElement, container: Node) {
     const { type, props } = element;
 
     const node = document.createElement(type);
     Object.keys(props).forEach(propName => {
-        if (propName !== 'children') {
+        if (propName === 'className') {
+            if (props[propName])
+                node.setAttribute('class', props[propName]!);
+        }
+        else if (propName !== 'children') {
             node.setAttribute(propName, props[propName]);
         }
     })
@@ -44,17 +51,16 @@ function createHostElement(element: ReactHostElement): Node {
     const children = props.children;
     if (Array.isArray(children)) {
         children.forEach(childElement => {
-            if (childElement && typeof childElement !== 'boolean') {
-                const childNode = instantiateComponent(childElement);
-                node.appendChild(childNode);
-            }
+            renderElement(childElement, node);
         })
+    } else {
+        renderElement(children, node);
     }
 
-    return node;
+    container.appendChild(node);
 }
 
-function createCompositeElement(element: ReactComponentElement): Node {
+function renderCompositeElement(element: ReactComponentElement, container: Node) {
     const node = element.type(element.props);
-    return node;
+    container.appendChild(node);
 }
