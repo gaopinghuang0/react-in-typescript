@@ -3,6 +3,47 @@ Simple React in Typescript
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
+
+## Setup
+* Uninstall `react` and `react-dom` because we will use our own implementation.
+* Install react types via `yarn add -D @types/react` if not existing. We will use react types for API requirement.
+* In this project, we need to transform JSX into JS and replace it with `MyReact.createElement`, rather than the default `React.createElement`. [babel-plugin-transform-react-jsx](https://www.npmjs.com/package/babel-plugin-transform-react-jsx) can do the work. To customize babel beyond the default config of `create-react-app`, I found a [workaround here](https://github.com/facebook/create-react-app/issues/167). First `yarn eject`, then edit `config/webpack.config.js` by adding the plugin into the the following section (around line 390).
+```js
+{
+    test: /\.(js|mjs|jsx|ts|tsx)$/,
+    include: paths.appSrc,
+    loader: require.resolve('babel-loader'),
+    options: {
+    customize: require.resolve(
+        'babel-preset-react-app/webpack-overrides'
+    ),
+
+    plugins: [
+        [
+        require.resolve('babel-plugin-named-asset-import'),
+        {
+            loaderMap: {
+            svg: {
+                ReactComponent:
+                '@svgr/webpack?-svgo,+titleProp,+ref![path]',
+            },
+            },
+        },
+        ],
+        [
+        "transform-react-jsx",
+        {
+            "pragma": "MyReact.createElement" // default pragma is React.createElement
+        }
+        ],
+        isEnvDevelopment &&
+        shouldUseReactRefresh &&
+        require.resolve('react-refresh/babel'),
+    ].filter(Boolean),
+```
+
+* The webpage does not reload on file change in Windows Linux. https://stackoverflow.com/questions/42189575/create-react-app-reload-not-working
+
 ## Available Scripts
 
 In the project directory, you can run:

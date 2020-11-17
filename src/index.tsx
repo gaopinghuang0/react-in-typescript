@@ -1,7 +1,7 @@
 // Import to slience the JSX warnings.
 import * as React from 'react';
 
-import { render } from './MyReact';
+import * as MyReact from './MyReact';
 // import { ReactElement, ReactHostElement } from './MyReact/types';
 
 function Button(props: any): React.ReactElement {
@@ -19,10 +19,11 @@ var element1 = (
     <a href="http://www.baidu.com">
         <Button text="this is a button" />
         <Button text="this is another button" />
+        <Button text="this is third button" />
       hyperscript
     </a>
 )
-render(element1, document.getElementById('root'));
+MyReact.render(element1, document.getElementById('root'));
 
 // If you want to start measuring performance in your app, pass a function
 // to log results (for example: reportWebVitals(console.log))
