@@ -42,7 +42,7 @@ This project was bootstrapped with [Create React App](https://github.com/faceboo
     ].filter(Boolean),
 ```
 
-* The webpage does not reload on file change in Windows Linux. https://stackoverflow.com/questions/42189575/create-react-app-reload-not-working
+* The webpage does not reload on file change in Windows Linux. I checked this [StackOverflow](https://stackoverflow.com/questions/42189575/create-react-app-reload-not-working) and this Reddit [Create React App live reload not working on Ubuntu-18.04](https://www.reddit.com/r/bashonubuntuonwindows/comments/fz0du4/create_react_app_live_reload_not_working_on/), none was working. Then I updated the `injectClient` from false to true in `config/webpackDevServer.config.js`. Now auto-reload is working. When I checked the compiled code, I noticed that `0.chunk.js` has added about 6000 lines of code of `WebsocketClient.js`, compared to the old version when the `injectClient` is false.
 
 ## Available Scripts
 

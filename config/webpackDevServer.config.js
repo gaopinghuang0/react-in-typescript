@@ -68,7 +68,7 @@ module.exports = function (proxy, allowedHost) {
     transportMode: 'ws',
     // Prevent a WS client from getting injected as we're already including
     // `webpackHotDevClient`.
-    injectClient: false,
+    injectClient: true,  // GH: changed from false to true.
     // Enable custom sockjs pathname for websocket connection to hot reloading server.
     // Enable custom sockjs hostname, pathname and port for websocket connection
     // to hot reloading server.

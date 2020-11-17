@@ -19,7 +19,7 @@ var element1 = (
     <a href="http://www.baidu.com">
         <Button text="this is a button" />
         <Button text="this is another button" />
-        <Button text="this is third button" />
+        {/* <Button text="this is third button" /> */}
       hyperscript
     </a>
 )
