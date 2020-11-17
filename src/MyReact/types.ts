@@ -1,3 +1,4 @@
+
 export type ReactElement = ReactHostElement | ReactComponentElement;
 
 
@@ -13,15 +14,17 @@ export interface ReactHostElement {
 }
 
 export interface ReactComponentElement {
-    type: Function,
+    type: ReactFunc,
     props: any
 }
+
+export type ReactFunc = (props: any) => ReactElement;
 
 export type ReactNodeList = ReactNode | ReactEmpty;
 
 export type ReactNode = ReactElement | ReactFragment | ReactText;
 
-export type ReactFragment = Array<ReactNode | ReactEmpty>;
+export type ReactFragment = Array<ReactNodeList>;
 
 export type ReactText = string | number;
 

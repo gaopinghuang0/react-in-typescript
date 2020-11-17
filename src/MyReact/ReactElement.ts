@@ -6,8 +6,5 @@ export function createElement(type: string, config: any, ...args: ReactElement[]
     const children = [...args];
     props.children = children;
 
-    return {
-        type,
-        props
-    }
+    return { type, props }
 }

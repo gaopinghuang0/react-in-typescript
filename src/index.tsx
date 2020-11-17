@@ -1,27 +1,28 @@
+// Import to slience the JSX warnings.
+import * as React from 'react';
+
 import { render } from './MyReact';
-import { ReactHostElement } from './MyReact/types';
+// import { ReactElement, ReactHostElement } from './MyReact/types';
 
-const element1: ReactHostElement = {
-    type: 'a',
-    props: {
-        href: 'http://www.baidu.com',
-        children: [{
-            type: 'button',
-            props: {
-                className: 'btn',
-                children: ['this is a button']
-            },
-        },
-            'hyperscript']
+function Button(props: any): React.ReactElement {
+    return {
+        type: 'button',
+        key: '1',
+        props: {
+            class: 'btn',
+            children: [props.text]
+        }
     }
-};
+}
+
+var element1 = (
+    <a href="http://www.baidu.com">
+        <Button text="this is a button" />
+        <Button text="this is another button" />
+      hyperscript
+    </a>
+)
 render(element1, document.getElementById('root'));
-
-
-// createElement
-// render
-// 
-
 
 // If you want to start measuring performance in your app, pass a function
 // to log results (for example: reportWebVitals(console.log))

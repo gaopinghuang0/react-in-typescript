@@ -24,8 +24,10 @@ function renderElement(element: ReactNodeList, container: Node) {
     switch (type) {
         case 'string':
             return renderHostElement(element as ReactHostElement, container);
-        default:
+        case 'function':
             return renderCompositeElement(element as ReactComponentElement, container);
+        default:
+            return;
     }
 }
 
@@ -61,6 +63,6 @@ function renderHostElement(element: ReactHostElement, container: Node) {
 }
 
 function renderCompositeElement(element: ReactComponentElement, container: Node) {
-    const node = element.type(element.props);
-    container.appendChild(node);
+    const elem = element.type(element.props);
+    renderElement(elem, container);
 }
