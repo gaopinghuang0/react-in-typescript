@@ -1,18 +1,16 @@
-import { ReactComponentElement, ReactHostElement, ReactNodeList, ReactText } from "./types";
 
-
-export const render = (element: ReactNodeList, container: Node | null | undefined) => {
+export const render = (element: React.ReactNode, container: Node | null | undefined) => {
     if (container == null) return;
 
     // For the first time, mount the element, otherwise update.
     mount(element, container);
 }
 
-function mount(element: ReactNodeList, container: Node) {
+function mount(element: React.ReactNode, container: Node) {
     renderElement(element, container);
 }
 
-function renderElement(element: ReactNodeList, container: Node) {
+function renderElement(element: React.ReactNode, container: Node) {
     if (element == null || typeof element === 'boolean') {
         return;
     }
@@ -23,20 +21,20 @@ function renderElement(element: ReactNodeList, container: Node) {
     const type = typeof (element as any).type;
     switch (type) {
         case 'string':
-            return renderHostElement(element as ReactHostElement, container);
+            return renderHostElement(element as React.ReactHTMLElement<any>, container);
         case 'function':
-            return renderCompositeElement(element as ReactComponentElement, container);
+            return renderCompositeElement(element as React.ReactComponentElement<any>, container);
         default:
             return;
     }
 }
 
-function renderText(element: ReactText, container: Node) {
+function renderText(element: React.ReactText, container: Node) {
     const node = document.createTextNode(element.toString());
     container.appendChild(node);
 }
 
-function renderHostElement(element: ReactHostElement, container: Node) {
+function renderHostElement(element: React.ReactHTMLElement<any>, container: Node) {
     const { type, props } = element;
 
     const node = document.createElement(type);
@@ -46,7 +44,7 @@ function renderHostElement(element: ReactHostElement, container: Node) {
                 node.setAttribute('class', props[propName]!);
         }
         else if (propName !== 'children') {
-            node.setAttribute(propName, props[propName]);
+            node.setAttribute(propName, (props as any)[propName]);
         }
     })
 
@@ -62,7 +60,7 @@ function renderHostElement(element: ReactHostElement, container: Node) {
     container.appendChild(node);
 }
 
-function renderCompositeElement(element: ReactComponentElement, container: Node) {
+function renderCompositeElement(element: React.ReactComponentElement<any>, container: Node) {
     const elem = element.type(element.props);
     renderElement(elem, container);
 }

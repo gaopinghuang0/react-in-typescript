@@ -17,9 +17,8 @@ function Button(props: any): React.ReactElement {
 
 var element1 = (
     <a href="http://www.baidu.com">
-        <Button text="this is a button" />
+        <Button key="1" text="this is a button" />
         <Button text="this is another button" />
-        {/* <Button text="this is third button" /> */}
       hyperscript
     </a>
 )
