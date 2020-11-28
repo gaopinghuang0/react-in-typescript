@@ -1,3 +1,4 @@
+import { isClass } from "./Component";
 
 export const render = (element: React.ReactNode, container: Node | null | undefined) => {
     if (container == null) return;
@@ -34,6 +35,8 @@ function renderText(element: React.ReactText, container: Node) {
     container.appendChild(node);
 }
 
+const filteredProps = new Set(['__self', '__source', 'children']);
+
 function renderHostElement(element: React.ReactHTMLElement<any>, container: Node) {
     const { type, props } = element;
 
@@ -43,7 +46,7 @@ function renderHostElement(element: React.ReactHTMLElement<any>, container: Node
             if (props[propName])
                 node.setAttribute('class', props[propName]!);
         }
-        else if (propName !== 'children') {
+        else if (!filteredProps.has(propName)) {
             node.setAttribute(propName, (props as any)[propName]);
         }
     })
@@ -61,6 +64,22 @@ function renderHostElement(element: React.ReactHTMLElement<any>, container: Node
 }
 
 function renderCompositeElement(element: React.ReactComponentElement<any>, container: Node) {
-    const elem = element.type(element.props);
-    renderElement(elem, container);
+    const { type, props } = element;
+
+    if (isClass(type)) {
+        // ClassComponent
+        const instance = new type(props);
+        instance.props = props;
+        hooks(instance, 'componentWillMount');
+        element = instance.render(element);
+    } else {
+        // FunctionComponent
+        element = element.type(element.props);
+    }
+
+    renderElement(element, container);
+}
+
+function hooks(obj: any, name: string, ...args: any[]) {
+    obj[name] && obj[name].apply(obj, args);
 }
