@@ -1,4 +1,3 @@
-import { assert } from "console";
 
 class Component<P = {}, S = {}> {
     isReactComponent = true;
@@ -22,6 +21,10 @@ class Component<P = {}, S = {}> {
     ) { };
 
     forceUpdate(callback?: () => void) { };
+
+    render() {
+        throw new Error('must implement render method');
+    }
 }
 Component.prototype.isReactComponent = true;
 

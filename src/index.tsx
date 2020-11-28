@@ -33,6 +33,8 @@ var element1 = (
     </div>
 )
 
+var textElement = 'hello';
+var domElement = (<a href="http://hello.com">hello</a>)
 
 MyReact.render(element1, document.getElementById('root'));
 
