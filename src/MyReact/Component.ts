@@ -28,6 +28,9 @@ class Component<P = {}, S = {}> {
 }
 Component.prototype.isReactComponent = true;
 
+// It is not easy to detect if an object is a class.
+// However, we only need to check if it is a subclass of React Component.
+// Therefore, checking `isReactComponent` is enough.
 export function isClass(type: any) {
     return (
         Boolean(type.prototype) &&

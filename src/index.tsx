@@ -16,9 +16,21 @@ function Button(props: any): React.ReactElement {
 }
 
 class Link extends Component {
+    componentWillMount() {
+        console.log('Link will Mount');
+    }
+    componentWillUnmount() {
+        console.log('Link will Unmount');
+    }
+    componentWillUpdate() {
+        console.log('Link will update')
+    }
+    componentDidUpdate() {
+        console.log('Link Did update')
+    }
+
     render() {
         const { children } = this.props;
-        console.log(children);
         return (
             <a href="http://google.com">{children}</a>
         )
@@ -33,9 +45,11 @@ var element1 = (
     </div>
 )
 
-var textElement = 'hello';
-var domElement = (<a href="http://hello.com">hello</a>)
+// var textElement = 'hello';
+// var domElement = (<a href="http://hello.com">hello</a>)
 
+MyReact.render(element1, document.getElementById('root'));
+// Render again should trigger unmount
 MyReact.render(element1, document.getElementById('root'));
 
 // If you want to start measuring performance in your app, pass a function

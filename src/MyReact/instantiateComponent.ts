@@ -1,12 +1,17 @@
 import { isClass } from "./Component";
 import { notEmpty } from "./utils";
 
-// Internal component that can be mounted
-interface MountableComponent {
+// Internal component that can be mounted, unmounted.
+// Its instance is called "internal instance".
+// It is different from user-specified component, in which the instance is called
+// "public instance".
+export interface InternalComponent {
     mount(): Node | null | undefined;
+    unmount(): void;
 }
 
-export function instantiateComponent(element: React.ReactNode): MountableComponent | null {
+// Instantiate internal component
+export function instantiateComponent(element: React.ReactNode): InternalComponent | null {
     if (element == null || typeof element === 'boolean') {
         return null;
     }
@@ -16,7 +21,6 @@ export function instantiateComponent(element: React.ReactNode): MountableCompone
     }
 
     const type = typeof (element as any).type;
-
     switch (type) {
         case 'string':
             return new HostComponent(element as React.ReactHTMLElement<any>);
@@ -28,7 +32,7 @@ export function instantiateComponent(element: React.ReactNode): MountableCompone
 }
 
 
-class TextComponent implements MountableComponent {
+class TextComponent implements InternalComponent {
     currentElement: React.ReactText;
     node: Node | null;
 
@@ -37,21 +41,31 @@ class TextComponent implements MountableComponent {
         this.node = null;
     }
 
+    getPublicInstance() {
+        return this.node;
+    }
+
     mount() {
         const node = document.createTextNode(this.currentElement.toString());
         this.node = node;
         return node;
     }
+
+    unmount() {
+        this.node = null;
+    }
 }
 
 const filteredProps = new Set(['__self', '__source', 'children']);
 
-class HostComponent implements MountableComponent {
+class HostComponent implements InternalComponent {
     currentElement: React.ReactHTMLElement<any>;
     node: Node | null;
+    renderedChildren: InternalComponent[];
 
     constructor(element: React.ReactHTMLElement<any>) {
         this.currentElement = element;
+        this.renderedChildren = [];
         this.node = null;
     }
 
@@ -77,6 +91,7 @@ class HostComponent implements MountableComponent {
         }
 
         const renderedChildren = (children as React.ReactElement[]).map(instantiateComponent).filter(notEmpty);
+        this.renderedChildren = renderedChildren;
 
         renderedChildren
             .map(child => child.mount())
@@ -87,14 +102,31 @@ class HostComponent implements MountableComponent {
 
         return node;
     }
+
+    unmount() {
+        // Unmount all the children
+        const renderedChildren = this.renderedChildren;
+        renderedChildren.forEach(child => child.unmount());
+
+        // TODO: remove event listeners and clears some caches.
+    }
 }
 
-// Class component and functional component
-class CompositeComponent implements MountableComponent {
+// Internal wrapper for Class component and functional component
+class CompositeComponent implements InternalComponent {
     currentElement: React.ReactComponentElement<any>;
+    renderedComponent: InternalComponent | null;
+    publicInstance: any;
 
     constructor(element: React.ReactComponentElement<any>) {
         this.currentElement = element;
+        this.renderedComponent = null;
+        this.publicInstance = null;
+    }
+
+    getPublicInstance() {
+        // Return the user-specified instance.
+        return this.getPublicInstance;
     }
 
     mount() {
@@ -102,20 +134,35 @@ class CompositeComponent implements MountableComponent {
         const { type, props } = element;
 
         let renderedElement;
+        let publicInstance;
         if (isClass(type)) {
             // ClassComponent
-            const instance = new type(props);
-            instance.props = props;
-            invokeLifeCycle(instance, 'componentWillMount');
-            renderedElement = instance.render();
+            publicInstance = new type(props);
+            publicInstance.props = props;
+            invokeLifeCycle(publicInstance, 'componentWillMount');
+            renderedElement = publicInstance.render();
         } else {
             // FunctionComponent
+            publicInstance = null;
             renderedElement = type(props);
         }
 
+        this.publicInstance = publicInstance;
+
         // Instantiate the child internal instance according to the element.
         const renderedComponent = instantiateComponent(renderedElement);
+        this.renderedComponent = renderedComponent;
         return renderedComponent?.mount();
+    }
+
+    unmount() {
+        const publicInstance = this.publicInstance;
+        if (publicInstance) {
+            invokeLifeCycle(publicInstance, 'componentWillUnmount');
+        }
+
+        const renderedComponent = this.renderedComponent;
+        renderedComponent?.unmount();
     }
 }
 
