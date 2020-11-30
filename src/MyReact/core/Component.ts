@@ -1,5 +1,5 @@
 
-class Component<P = {}, S = {}> {
+export class Component<P = {}, S = {}> {
     isReactComponent = true;
     readonly props: Readonly<P> & Readonly<{ children?: React.ReactNode }>;
     context: any;
@@ -37,5 +37,3 @@ export function isClass(type: any) {
         Boolean(type.prototype.isReactComponent)
     )
 }
-
-export default Component;

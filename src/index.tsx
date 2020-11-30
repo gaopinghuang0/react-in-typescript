@@ -2,7 +2,6 @@
 import * as React from 'react';
 
 import * as MyReact from './MyReact';
-import Component from './MyReact/Component';
 
 function Button(props: any): React.ReactElement {
     return {
@@ -15,7 +14,7 @@ function Button(props: any): React.ReactElement {
     }
 }
 
-class Link extends Component {
+class Link extends MyReact.Component {
     componentWillMount() {
         console.log('Link will Mount');
     }
@@ -41,12 +40,14 @@ var element1 = (
     <div className="container">
         <Button key="1" text="this is a button" />
         <Button text="this is another button" />
+        {null}
         <Link>google</Link>
     </div>
 )
 
 // var textElement = 'hello';
 // var domElement = (<a href="http://hello.com">hello</a>)
+// var emptyElement = (undefined);
 
 MyReact.render(element1, document.getElementById('root'));
 // Render again should trigger unmount

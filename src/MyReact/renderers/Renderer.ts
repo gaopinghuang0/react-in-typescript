@@ -1,5 +1,6 @@
-import { assert } from "./utils";
-import { instantiateComponent, InternalComponent } from "./instantiateComponent";
+import { assert } from "../utils/assert";
+import { instantiateComponent } from "./instantiateComponent";
+import { InternalComponent } from "./InternalComponent";
 
 const ROOT_KEY = "MyReactRootKey";
 let rootID = 1;
@@ -28,13 +29,10 @@ function mount(element: React.ReactNode, container: HTMLElement) {
     }
 
     const rootComponent = instantiateComponent(element);
-    if (!rootComponent) return;
 
     saveInternalInstanceToNode(container, rootComponent);
 
     const node = rootComponent.mount();
-    if (!node) return;
-
     container.appendChild(node);
 }
 
