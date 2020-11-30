@@ -25,6 +25,16 @@ export const render = (element: React.ReactNode, container: HTMLElement | null |
 function mount(element: React.ReactNode, container: HTMLElement) {
     // Destroy any existing tree
     if (container.firstChild) {
+        const prevRootComponent = getInternalInstanceFromNode(container);
+        const prevElement = prevRootComponent.currentElement;
+
+        if (prevElement && typeof prevElement === 'object') {
+            if ((prevElement as React.ReactElement).type === (element as React.ReactElement).type) {
+                prevRootComponent.receive(element);
+                return;
+            }
+        }
+
         unmount(container);
     }
 

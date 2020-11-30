@@ -5,6 +5,8 @@ import { EmptyComponent } from "./EmptyComponent";
 
 const _sharedEmptyComponent = new EmptyComponent();
 
+// Credit: adapted from https://reactjs.org/docs/implementation-notes.html
+
 // Internal wrapper for Class component and functional component
 export class CompositeComponent implements InternalComponent {
     currentElement: React.ReactComponentElement<any>;
@@ -60,7 +62,7 @@ export class CompositeComponent implements InternalComponent {
 
     // Do "virtual DOM diffing"
     receive(nextElement: React.ReactComponentElement<any>) {
-        const prevPros = this.currentElement.props;
+        // const prevPros = this.currentElement.props;
         const publicInstance = this.publicInstance;
         const prevRenderedComponent = this.renderedComponent;
         const prevRenderedElement = prevRenderedComponent.currentElement;
@@ -90,11 +92,26 @@ export class CompositeComponent implements InternalComponent {
                 prevRenderedComponent.receive(nextRenderedElement);
                 return;
             }
-        } else {
-
         }
 
+        // If we reached this point, we need to unmount the previously
+        // mounted component, mount the new one, and swap their nodes.
+        const prevNode = prevRenderedComponent.getHostNode();
 
+        // Unmount the old child and mount a new child
+        prevRenderedComponent.unmount();
+        const nextRenderedComponent = instantiateComponent(nextRenderedElement);
+        const nextNode = nextRenderedComponent.mount();
+
+        this.renderedComponent = nextRenderedComponent;
+
+        prevNode?.parentNode?.replaceChild(nextNode, prevNode);
+    }
+
+    getHostNode() {
+        // Ask the rendered component to provide it.
+        // This will recursively drill down any composites.
+        return this.renderedComponent.getHostNode();
     }
 }
 

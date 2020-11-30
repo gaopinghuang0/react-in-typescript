@@ -8,6 +8,6 @@ export interface InternalComponent {
     currentElement: React.ReactNode,
     mount(): Node;
     unmount(): void;
-    // getHostNode(): void;
+    getHostNode(): Node | null;
 }
 

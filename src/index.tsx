@@ -49,9 +49,14 @@ var element1 = (
 // var domElement = (<a href="http://hello.com">hello</a>)
 // var emptyElement = (undefined);
 
+element1 = (<Link>Google</Link>);
+let element2 = (<Link>Facebook</Link>);
+
 MyReact.render(element1, document.getElementById('root'));
-// Render again should trigger unmount
-MyReact.render(element1, document.getElementById('root'));
+// Should reuse existing DOM
+setTimeout(() => {
+    MyReact.render(element2, document.getElementById('root'));
+}, 1000)
 
 // If you want to start measuring performance in your app, pass a function
 // to log results (for example: reportWebVitals(console.log))

@@ -11,7 +11,9 @@ export class EmptyComponent implements InternalComponent {
     mount(): Node {
         return document.createComment('Empty Node');
     }
-    getHostNode(): void { }
+    getHostNode(): Node | null {
+        return null;
+    }
     unmount(): void { }
     receive(nextElement: any) { }
 }

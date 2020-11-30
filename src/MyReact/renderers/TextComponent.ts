@@ -3,14 +3,14 @@ import { InternalComponent } from "./InternalComponent";
 
 export class TextComponent implements InternalComponent {
     currentElement: React.ReactText;
-    node: Node | null;
+    node: Text | null;
 
     constructor(element: React.ReactText) {
         this.currentElement = element;
         this.node = null;
     }
 
-    getPublicInstance() {
+    getHostNode(): Text | null {
         return this.node;
     }
 
@@ -26,5 +26,9 @@ export class TextComponent implements InternalComponent {
 
     // Do "virtual DOM diffing"
     receive(nextElement: React.ReactText) {
+        this.currentElement = nextElement;
+        if (this.node) {
+            this.node.textContent = nextElement.toString();
+        }
     }
 }
