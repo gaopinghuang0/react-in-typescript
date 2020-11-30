@@ -2,7 +2,6 @@ import { instantiateComponent } from "./instantiateComponent";
 import { InternalComponent } from "./InternalComponent";
 
 // Credit: adapted from https://reactjs.org/docs/implementation-notes.html
-const filteredProps = new Set(['__self', '__source', 'children']);
 export class HostComponent implements InternalComponent {
     currentElement: React.ReactHTMLElement<any>;
     node: HTMLElement | null;
@@ -29,7 +28,7 @@ export class HostComponent implements InternalComponent {
                 if (props[propName])
                     node.setAttribute('class', props[propName]!);
             }
-            else if (!filteredProps.has(propName)) {
+            else if (propName !== 'children') {
                 node.setAttribute(propName, (props as any)[propName]);
             }
         });
