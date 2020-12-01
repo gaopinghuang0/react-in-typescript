@@ -2,6 +2,8 @@ import { isClass } from "../core/Component";
 import { instantiateComponent } from "./instantiateComponent";
 import { InternalComponent } from "./InternalComponent";
 import { EmptyComponent } from "./EmptyComponent";
+import { shouldUpdateComponent } from "./shouldUpdateComponent";
+import Reconciler from './Reconciler'
 
 const _sharedEmptyComponent = new EmptyComponent();
 
@@ -21,7 +23,7 @@ export class CompositeComponent implements InternalComponent {
 
     getPublicInstance() {
         // Return the user-specified instance.
-        return this.getPublicInstance;
+        return this.publicInstance;
     }
 
     mount() {
@@ -47,7 +49,7 @@ export class CompositeComponent implements InternalComponent {
         // Instantiate the child internal instance according to the element.
         const renderedComponent = instantiateComponent(renderedElement);
         this.renderedComponent = renderedComponent;
-        return renderedComponent.mount();
+        return Reconciler.mountComponent(renderedComponent);
     }
 
     unmount() {
@@ -57,7 +59,7 @@ export class CompositeComponent implements InternalComponent {
         }
 
         const renderedComponent = this.renderedComponent;
-        renderedComponent.unmount();
+        Reconciler.unmountComponent(renderedComponent);
     }
 
     // Do "virtual DOM diffing"
@@ -87,11 +89,9 @@ export class CompositeComponent implements InternalComponent {
 
         // If the rendered element type has not changed,
         // reuse the existing component instance and exit.
-        if (prevRenderedElement && typeof prevRenderedElement === 'object') {
-            if ((prevRenderedElement as React.ReactElement).type === nextRenderedElement.type) {
-                prevRenderedComponent.receive(nextRenderedElement);
-                return;
-            }
+        if (shouldUpdateComponent(prevRenderedElement, nextRenderedElement)) {
+            Reconciler.receiveComponent(prevRenderedComponent, nextRenderedElement);
+            return;
         }
 
         // If we reached this point, we need to unmount the previously
@@ -99,9 +99,9 @@ export class CompositeComponent implements InternalComponent {
         const prevNode = prevRenderedComponent.getHostNode();
 
         // Unmount the old child and mount a new child
-        prevRenderedComponent.unmount();
+        Reconciler.unmountComponent(prevRenderedComponent);
         const nextRenderedComponent = instantiateComponent(nextRenderedElement);
-        const nextNode = nextRenderedComponent.mount();
+        const nextNode = Reconciler.mountComponent(nextRenderedComponent);
 
         this.renderedComponent = nextRenderedComponent;
 

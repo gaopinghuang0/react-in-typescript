@@ -1,6 +1,7 @@
 import { assert } from "../utils/assert";
 import { instantiateComponent } from "./instantiateComponent";
 import { InternalComponent } from "./InternalComponent";
+import Reconciler from './Reconciler'
 
 const ROOT_KEY = "MyReactRootKey";
 let rootID = 1;
@@ -42,14 +43,14 @@ function mount(element: React.ReactNode, container: HTMLElement) {
 
     saveInternalInstanceToNode(container, rootComponent);
 
-    const node = rootComponent.mount();
+    const node = Reconciler.mountComponent(rootComponent, container);
     container.appendChild(node);
 }
 
 function unmount(container: HTMLElement) {
     const rootComponent = getInternalInstanceFromNode(container);
 
-    rootComponent.unmount();
+    Reconciler.unmountComponent(rootComponent);
 
     removeChildren(container);
     delete container.dataset[ROOT_KEY];

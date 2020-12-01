@@ -1,5 +1,6 @@
 import { instantiateComponent } from "./instantiateComponent";
 import { InternalComponent } from "./InternalComponent";
+import Reconciler from "./Reconciler";
 
 // Credit: adapted from https://reactjs.org/docs/implementation-notes.html
 export class HostComponent implements InternalComponent {
@@ -42,7 +43,7 @@ export class HostComponent implements InternalComponent {
         this.renderedChildren = renderedChildren;
 
         renderedChildren
-            .map(child => child.mount())
+            .map(child => Reconciler.mountComponent(child))
             .forEach(childNode => node.append(childNode));
 
         return node;
@@ -51,7 +52,7 @@ export class HostComponent implements InternalComponent {
     unmount() {
         // Unmount all the children
         const renderedChildren = this.renderedChildren;
-        renderedChildren.forEach(child => child.unmount());
+        renderedChildren.forEach(child => Reconciler.unmountComponent(child));
 
         // TODO: remove event listeners and clears some caches.
     }
@@ -116,7 +117,7 @@ export class HostComponent implements InternalComponent {
             // internal instance, mount it, and use its node.
             if (!prevChild) {
                 let nextChild = instantiateComponent(nextChildren[i]);
-                let node = nextChild.mount();
+                let node = Reconciler.mountComponent(nextChild);
 
                 // Record that we need to append a node
                 operationQueue.push({ type: 'ADD', node });
@@ -133,10 +134,10 @@ export class HostComponent implements InternalComponent {
             // and mount a new one instead of it.
             if (!canUpdate) {
                 let prevNode = prevChild.getHostNode();
-                prevChild.unmount();
+                Reconciler.unmountComponent(prevChild);
 
                 let nextChild = instantiateComponent(nextChildren[i]);
-                let nextNode = nextChild.mount();
+                let nextNode = Reconciler.mountComponent(nextChild);
 
                 // Record that we need to swap the nodes
                 operationQueue.push({ type: 'REPLACE', prevNode, nextNode });
@@ -146,7 +147,7 @@ export class HostComponent implements InternalComponent {
 
             // If we can update an existing internal instance,
             // just let it receive the next element and handle its own update.
-            prevChild.receive(nextChildren[i]);
+            Reconciler.receiveComponent(prevChild, nextChildren[i]);
             nextRenderedChildren.push(prevChild);
         }
 
@@ -154,7 +155,7 @@ export class HostComponent implements InternalComponent {
         for (var j = nextChildren.length; j < prevChildren.length; j++) {
             let prevChild = prevRenderedChildren[j];
             let node = prevChild.getHostNode();
-            prevChild.unmount();
+            Reconciler.unmountComponent(prevChild);
 
             // Record that we need to remove the node
             operationQueue.push({ type: 'REMOVE', node });
