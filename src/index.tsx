@@ -36,7 +36,7 @@ class Link extends MyReact.Component {
     }
 }
 
-var element1 = (
+const element1 = (
     <div className="container">
         <Button key="1" text="this is a button" />
         <Button text="this is another button" />
@@ -45,17 +45,17 @@ var element1 = (
     </div>
 )
 
-// var textElement = 'hello';
-// var domElement = (<a href="http://hello.com">hello</a>)
-// var emptyElement = (undefined);
+// const textElement = 'hello';
+// const domElement = (<a href="http://hello.com">hello</a>)
+// const emptyElement = (undefined);
 
-element1 = (<Link>Google</Link>);
-let element2 = (<Link>Facebook</Link>);
+const element2 = (<Link>Google</Link>);
+const element3 = (<Link>Facebook</Link>);
 
 MyReact.render(element1, document.getElementById('root'));
 // Should reuse existing DOM
 setTimeout(() => {
-    MyReact.render(element2, document.getElementById('root'));
+    MyReact.render(element1, document.getElementById('root'));
 }, 1000)
 
 // If you want to start measuring performance in your app, pass a function

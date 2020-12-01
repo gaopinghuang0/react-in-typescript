@@ -2,6 +2,7 @@ import { assert } from "../utils/assert";
 import { instantiateComponent } from "./instantiateComponent";
 import { InternalComponent } from "./InternalComponent";
 import Reconciler from './Reconciler'
+import { shouldUpdateComponent } from "./shouldUpdateComponent";
 
 const ROOT_KEY = "MyReactRootKey";
 let rootID = 1;
@@ -19,26 +20,17 @@ function isRoot(node: HTMLElement) {
 export const render = (element: React.ReactNode, container: HTMLElement | null | undefined) => {
     if (container == null) return;
 
-    // For the first time, mount the element, otherwise update.
-    mount(element, container);
+    // First check if we've already rendered into this node.
+    // If so, we'll be doing an update.
+    // Otherwise we'll assume this is an initial render.
+    if (isRoot(container)) {
+        update(element, container);
+    } else {
+        mount(element, container);
+    }
 }
 
 function mount(element: React.ReactNode, container: HTMLElement) {
-    // Destroy any existing tree
-    if (container.firstChild) {
-        const prevRootComponent = getInternalInstanceFromNode(container);
-        const prevElement = prevRootComponent.currentElement;
-
-        if (prevElement && typeof prevElement === 'object') {
-            if ((prevElement as React.ReactElement).type === (element as React.ReactElement).type) {
-                prevRootComponent.receive(element);
-                return;
-            }
-        }
-
-        unmount(container);
-    }
-
     const rootComponent = instantiateComponent(element);
 
     saveInternalInstanceToNode(container, rootComponent);
@@ -47,7 +39,28 @@ function mount(element: React.ReactNode, container: HTMLElement) {
     container.appendChild(node);
 }
 
+function update(element: React.ReactNode, container: HTMLElement) {
+    // Ensure we have a valid root node
+    assert(container && isRoot(container));
+
+    // Destroy any existing tree
+    const prevRootComponent = getInternalInstanceFromNode(container);
+    const prevElement = prevRootComponent.currentElement;
+
+    if (shouldUpdateComponent(prevElement, element)) {
+        Reconciler.receiveComponent(prevRootComponent, element);
+        return;
+    } else {
+        // Unmount and then mount a new one
+        unmount(container);
+        mount(element, container);
+    }
+}
+
 function unmount(container: HTMLElement) {
+    // Ensure we have a valid root node
+    assert(container && isRoot(container));
+
     const rootComponent = getInternalInstanceFromNode(container);
 
     Reconciler.unmountComponent(rootComponent);

@@ -1,16 +1,25 @@
 import { InternalComponent } from "./InternalComponent";
 
-
+/**
+ * The Reconciler acts as the decorator for InternalComponent's mount(), unmount(),
+ * receive(). For example, it adds ComponentDidMount lifecycle at the end of mount().
+ */
 const Reconciler = {
-    mountComponent(component: InternalComponent, container?: HTMLElement): Node {
+    mountComponent(internalInstance: InternalComponent, container?: HTMLElement): Node {
         // For now, just return mount
-        return component.mount();
+        return internalInstance.mount();
     },
-    unmountComponent(component: InternalComponent) {
-        component.unmount();
+    unmountComponent(internalInstance: InternalComponent) {
+        internalInstance.unmount();
     },
-    receiveComponent(component: InternalComponent, nextElement: React.ReactNode) {
-        component.receive(nextElement);
+    receiveComponent(internalInstance: InternalComponent, nextElement: React.ReactNode) {
+        const prevElement = internalInstance.currentElement;
+
+        if (nextElement === prevElement) {
+            // There is no need to update the same element.
+            return;
+        }
+        internalInstance.receive(nextElement);
     },
 }
 
