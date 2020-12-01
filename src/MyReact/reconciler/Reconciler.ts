@@ -2,7 +2,7 @@ import { InternalComponent } from "./InternalComponent";
 
 /**
  * The Reconciler acts as the decorator for InternalComponent's mount(), unmount(),
- * receive(). For example, it adds ComponentDidMount lifecycle at the end of mount().
+ * receive(). For example, it helps register event listeners.
  */
 const Reconciler = {
     mountComponent(internalInstance: InternalComponent, container?: HTMLElement): Node {

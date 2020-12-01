@@ -49,13 +49,22 @@ const element1 = (
 // const domElement = (<a href="http://hello.com">hello</a>)
 // const emptyElement = (undefined);
 
-const element2 = (<Link>Google</Link>);
-const element3 = (<Link>Facebook</Link>);
+// const element2 = (<Link>Google</Link>);
+// const element3 = (<Link>Facebook</Link>);
+
+const element4 = (
+    <div className="container">
+        <Button key="1" text="this is a button" />
+        <Button text="this is a different button" />
+        {null}
+        <Link>google</Link>
+    </div>
+)
 
 MyReact.render(element1, document.getElementById('root'));
 // Should reuse existing DOM
 setTimeout(() => {
-    MyReact.render(element1, document.getElementById('root'));
+    // MyReact.render(element4, document.getElementById('root'));
 }, 1000)
 
 // If you want to start measuring performance in your app, pass a function

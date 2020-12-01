@@ -1,8 +1,8 @@
 import { assert } from "../utils/assert";
-import { instantiateComponent } from "./instantiateComponent";
-import { InternalComponent } from "./InternalComponent";
-import Reconciler from './Reconciler'
-import { shouldUpdateComponent } from "./shouldUpdateComponent";
+import { instantiateComponent } from "../reconciler/instantiateComponent";
+import { InternalComponent } from "../reconciler/InternalComponent";
+import Reconciler from '../reconciler/Reconciler'
+import { shouldUpdateComponent } from "../reconciler/shouldUpdateComponent";
 
 const ROOT_KEY = "MyReactRootKey";
 let rootID = 1;
