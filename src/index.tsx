@@ -14,11 +14,9 @@ function Button(props: any): React.ReactElement {
     }
 }
 
-type LinkState = {
-    count: number;
-}
+class Link extends MyReact.Component {
+    state: { count: number };  // This is necessary for Component to infer type of state
 
-class Link extends MyReact.Component<{}, LinkState>  {
     constructor(props: any) {
         super(props);
         this.state = { count: 0 };

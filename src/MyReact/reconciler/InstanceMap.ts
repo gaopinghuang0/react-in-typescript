@@ -8,4 +8,4 @@ import { InternalComponent } from "./InternalComponent";
  * to internal methods.
  */
 
-export const InstanceMap = new WeakMap<Component<any, any>, InternalComponent>();
+export const InstanceMap = new WeakMap<Component, InternalComponent>();

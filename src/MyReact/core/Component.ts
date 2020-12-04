@@ -1,6 +1,6 @@
 import UpdateQueue from "../reconciler/UpdateQueue";
 
-export class Component<P, S> {
+export class Component<P = {}, S = {}> {
     isReactComponent = true;
     readonly props: Readonly<P> & Readonly<{ children?: React.ReactNode }>;
     context: any;
