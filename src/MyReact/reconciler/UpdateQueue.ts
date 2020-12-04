@@ -1,13 +1,11 @@
 import { Component } from "..";
 import { CompositeComponent } from "./CompositeComponent";
 import { InstanceMap } from "./InstanceMap";
-import { InternalComponent } from "./InternalComponent";
 import ReactUpdates from "./ReactUpdates";
-import Reconciler from "./Reconciler";
 
 const UpdateQueue = {
 
-    enqueueSetState<P, S, K extends keyof S>(publicInstance: Component, partialState: ((prevState: S, props: Readonly<P>) => (Pick<S, K> | S | null)) | (Pick<S, K> | S | null)) {
+    enqueueSetState<P, S, K extends keyof S>(publicInstance: Component<P, S>, partialState: ((prevState: S, props: Readonly<P>) => (Pick<S, K> | S | null)) | (Pick<S, K> | S | null)) {
         // This is where React would do queueing, storing a series
         // of partialStates. The Updater would apply those in a batch later.
 

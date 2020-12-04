@@ -14,7 +14,11 @@ function Button(props: any): React.ReactElement {
     }
 }
 
-class Link extends MyReact.Component {
+type LinkState = {
+    count: number;
+}
+
+class Link extends MyReact.Component<{}, LinkState>  {
     constructor(props: any) {
         super(props);
         this.state = { count: 0 };

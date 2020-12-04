@@ -1,4 +1,4 @@
-import { PublicComponent } from "../core/Component";
+import { Component } from "../core/Component";
 import { InternalComponent } from "./InternalComponent";
 
 /**
@@ -8,4 +8,4 @@ import { InternalComponent } from "./InternalComponent";
  * to internal methods.
  */
 
-export const InstanceMap = new WeakMap<PublicComponent, InternalComponent>();
+export const InstanceMap = new WeakMap<Component<any, any>, InternalComponent>();

@@ -39,6 +39,8 @@ export class CompositeComponent implements InternalComponent {
             // Class Component
             publicInstance = new type(props);
             publicInstance.props = props;
+            // Store a reference from the instance back to the internal representation
+            InstanceMap.set(publicInstance, this);
             invokeLifeCycle(publicInstance, 'componentWillMount');
             renderedElement = publicInstance.render();
         } else {
@@ -48,9 +50,6 @@ export class CompositeComponent implements InternalComponent {
         }
 
         this.publicInstance = publicInstance;
-
-        // Store a reference from the instance back to the internal representation
-        InstanceMap.set(publicInstance, this);
 
         // Instantiate the child internal instance according to the element.
         const renderedComponent = instantiateComponent(renderedElement);
@@ -129,7 +128,6 @@ export class CompositeComponent implements InternalComponent {
     updateComponent(prevParentElement: React.ReactComponentElement<any>, nextParentElement: React.ReactComponentElement<any>) {
         console.log("here")
     }
-
 }
 
 function invokeLifeCycle(obj: any, name: string, ...args: any[]) {
