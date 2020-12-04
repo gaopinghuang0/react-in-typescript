@@ -9,7 +9,6 @@ export class TextComponent implements InternalComponent {
         this.currentElement = element;
         this.node = null;
     }
-
     getHostNode(): Text | null {
         return this.node;
     }
@@ -30,5 +29,8 @@ export class TextComponent implements InternalComponent {
         if (this.node) {
             this.node.textContent = nextElement.toString();
         }
+    }
+    performUpdateIfNecessary(): void {
+        throw new Error("Method not implemented.");
     }
 }

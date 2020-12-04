@@ -1,3 +1,4 @@
+import { CompositeComponent } from "./CompositeComponent";
 import { InternalComponent } from "./InternalComponent";
 
 /**
@@ -21,6 +22,9 @@ const Reconciler = {
         }
         internalInstance.receive(nextElement);
     },
+    performUpdateIfNecessary(internalInstance: InternalComponent) {
+        internalInstance.performUpdateIfNecessary();
+    }
 }
 
 export default Reconciler;

@@ -15,15 +15,27 @@ function Button(props: any): React.ReactElement {
 }
 
 class Link extends MyReact.Component {
+    constructor(props: any) {
+        super(props);
+        this.state = { count: 0 };
+
+        setTimeout(() => {
+            this.setState({ count: this.state.count + 1 });
+        }, 1000);
+    }
+
     componentWillMount() {
         console.log('Link will Mount');
     }
+
     componentWillUnmount() {
         console.log('Link will Unmount');
     }
+
     componentWillUpdate() {
         console.log('Link will update')
     }
+
     componentDidUpdate() {
         console.log('Link Did update')
     }
@@ -63,9 +75,9 @@ const element4 = (
 
 MyReact.render(element1, document.getElementById('root'));
 // Should reuse existing DOM
-setTimeout(() => {
-    MyReact.render(element4, document.getElementById('root'));
-}, 1000)
+// setTimeout(() => {
+//     MyReact.render(element4, document.getElementById('root'));
+// }, 1000)
 
 // If you want to start measuring performance in your app, pass a function
 // to log results (for example: reportWebVitals(console.log))

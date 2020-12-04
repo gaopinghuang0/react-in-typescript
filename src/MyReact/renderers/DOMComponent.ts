@@ -148,4 +148,7 @@ export class DOMComponent implements InternalComponent {
             }
         }
     }
+    performUpdateIfNecessary(): void {
+        throw new Error("Method not implemented.");
+    }
 }

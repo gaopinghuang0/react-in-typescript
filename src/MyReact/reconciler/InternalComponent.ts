@@ -9,5 +9,6 @@ export interface InternalComponent {
     mount(): Node;
     unmount(): void;
     getHostNode(): Node | null;
+    performUpdateIfNecessary(): void;
 }
 

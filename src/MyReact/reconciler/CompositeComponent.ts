@@ -4,6 +4,7 @@ import { InternalComponent } from "./InternalComponent";
 import { EmptyComponent } from "./EmptyComponent";
 import { shouldUpdateComponent } from "./shouldUpdateComponent";
 import Reconciler from './Reconciler'
+import { InstanceMap } from "./InstanceMap";
 
 const _sharedEmptyComponent = new EmptyComponent();
 
@@ -14,11 +15,13 @@ export class CompositeComponent implements InternalComponent {
     currentElement: React.ReactComponentElement<any>;
     renderedComponent: InternalComponent;
     publicInstance: any;
+    _pendingStateQueue: object[] | null;
 
     constructor(element: React.ReactComponentElement<any>) {
         this.currentElement = element;
         this.renderedComponent = _sharedEmptyComponent;
         this.publicInstance = null;
+        this._pendingStateQueue = null;
     }
 
     getPublicInstance() {
@@ -45,6 +48,9 @@ export class CompositeComponent implements InternalComponent {
         }
 
         this.publicInstance = publicInstance;
+
+        // Store a reference from the instance back to the internal representation
+        InstanceMap.set(publicInstance, this);
 
         // Instantiate the child internal instance according to the element.
         const renderedComponent = instantiateComponent(renderedElement);
@@ -113,6 +119,17 @@ export class CompositeComponent implements InternalComponent {
         // This will recursively drill down any composites.
         return this.renderedComponent.getHostNode();
     }
+
+    performUpdateIfNecessary() {
+        if (this._pendingStateQueue !== null) {
+            this.updateComponent(this.currentElement, this.currentElement);
+        }
+    }
+
+    updateComponent(prevParentElement: React.ReactComponentElement<any>, nextParentElement: React.ReactComponentElement<any>) {
+        console.log("here")
+    }
+
 }
 
 function invokeLifeCycle(obj: any, name: string, ...args: any[]) {
