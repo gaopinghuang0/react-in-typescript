@@ -128,7 +128,6 @@ export class DOMComponent implements InternalComponent {
         // Point the list of rendered children to the updated version.
         this.renderedChildren = nextRenderedChildren;
 
-        // Process the operation queue.
         this.processOperationQueue(operationQueue);
     }
 
