@@ -67,4 +67,39 @@ describe('ReactES6Class', () => {
         test(<Foo initialValue="foo" />, 'SPAN', 'foo');
     });
 
+    it('renders based on state using props in the constructor', () => {
+        class Foo extends MyReact.Component {
+            constructor(props) {
+                super(props);
+                this.state = { bar: props.initialValue };
+            }
+            changeState() {
+                this.setState({ bar: 'bar' });
+            }
+            render() {
+                if (this.state.bar === 'foo') {
+                    return <div className="foo" />;
+                }
+                return <span className={this.state.bar} />;
+            }
+        }
+        const instance = test(<Foo initialValue="foo" />, 'DIV', 'foo');
+        instance.changeState();
+        test(<Foo />, 'SPAN', 'bar');
+    });
+
+    // TODO: test `getDerivedStateFromProps`
+
+    it('should render with null in the initial state property', () => {
+        class Foo extends MyReact.Component {
+            constructor() {
+                super();
+                this.state = null;
+            }
+            render() {
+                return <span />;
+            }
+        }
+        test(<Foo />, 'SPAN', '');
+    });
 })
