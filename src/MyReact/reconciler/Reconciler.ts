@@ -1,4 +1,3 @@
-import { CompositeComponent } from "./CompositeComponent";
 import { InternalComponent } from "./InternalComponent";
 
 /**
@@ -14,10 +13,11 @@ const Reconciler = {
         internalInstance.unmount();
     },
     receiveComponent(internalInstance: InternalComponent, nextElement: React.ReactNode) {
-        const prevElement = internalInstance.currentElement;
+        const prevElement = internalInstance._currentElement;
 
         if (nextElement === prevElement) {
             // There is no need to update the same element.
+            console.log("Early stop!");
             return;
         }
         internalInstance.receive(nextElement);

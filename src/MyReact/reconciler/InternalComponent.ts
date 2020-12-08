@@ -4,8 +4,9 @@
 // It is different from user-specified component, in which the instance is called
 // "public instance".
 export interface InternalComponent {
+    getPublicInstance(): any;
     receive(nextElement: React.ReactNode): void;
-    currentElement: React.ReactNode,
+    _currentElement: React.ReactNode,
     mount(): Node;
     unmount(): void;
     getHostNode(): Node | null;

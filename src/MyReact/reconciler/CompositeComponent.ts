@@ -5,6 +5,7 @@ import { EmptyComponent } from "./EmptyComponent";
 import { shouldUpdateComponent } from "./shouldUpdateComponent";
 import Reconciler from './Reconciler'
 import { InstanceMap } from "./InstanceMap";
+import { assert } from "../utils/assert";
 
 const _sharedEmptyComponent = new EmptyComponent();
 
@@ -12,25 +13,25 @@ const _sharedEmptyComponent = new EmptyComponent();
 
 // Internal wrapper for Class component and functional component
 export class CompositeComponent implements InternalComponent {
-    currentElement: React.ReactComponentElement<any>;
-    renderedComponent: InternalComponent;
-    publicInstance: any;
+    _currentElement: React.ReactComponentElement<any>;
+    _renderedComponent: InternalComponent;
+    _publicInstance: any;
     _pendingStateQueue: object[] | null;
 
     constructor(element: React.ReactComponentElement<any>) {
-        this.currentElement = element;
-        this.renderedComponent = _sharedEmptyComponent;
-        this.publicInstance = null;
+        this._currentElement = element;
+        this._renderedComponent = _sharedEmptyComponent;
+        this._publicInstance = null;
         this._pendingStateQueue = null;
     }
 
     getPublicInstance() {
         // Return the user-specified instance.
-        return this.publicInstance;
+        return this._publicInstance;
     }
 
     mount() {
-        const element = this.currentElement;
+        const element = this._currentElement;
         const { type, props } = element;
 
         let renderedElement;
@@ -39,8 +40,10 @@ export class CompositeComponent implements InternalComponent {
             // Class Component
             publicInstance = new type(props);
             publicInstance.props = props;
+
             // Store a reference from the instance back to the internal representation
             InstanceMap.set(publicInstance, this);
+
             invokeLifeCycle(publicInstance, 'componentWillMount');
             renderedElement = publicInstance.render();
         } else {
@@ -49,33 +52,39 @@ export class CompositeComponent implements InternalComponent {
             renderedElement = type(props);
         }
 
-        this.publicInstance = publicInstance;
+        this._publicInstance = publicInstance;
 
         // Instantiate the child internal instance according to the element.
         const renderedComponent = instantiateComponent(renderedElement);
-        this.renderedComponent = renderedComponent;
-        return Reconciler.mountComponent(renderedComponent);
+        this._renderedComponent = renderedComponent;
+        const node = Reconciler.mountComponent(renderedComponent);
+
+        if (publicInstance) {
+            invokeLifeCycle(publicInstance, 'componentDidMount');
+        }
+
+        return node;
     }
 
     unmount() {
-        const publicInstance = this.publicInstance;
+        const publicInstance = this._publicInstance;
         if (publicInstance) {
             invokeLifeCycle(publicInstance, 'componentWillUnmount');
         }
 
-        const renderedComponent = this.renderedComponent;
+        const renderedComponent = this._renderedComponent;
         Reconciler.unmountComponent(renderedComponent);
     }
 
     // Do "virtual DOM diffing"
     receive(nextElement: React.ReactComponentElement<any>) {
         // const prevPros = this.currentElement.props;
-        const publicInstance = this.publicInstance;
-        const prevRenderedComponent = this.renderedComponent;
-        const prevRenderedElement = prevRenderedComponent.currentElement;
+        const publicInstance = this._publicInstance;
+        const prevRenderedComponent = this._renderedComponent;
+        const prevRenderedElement = prevRenderedComponent._currentElement;
 
         // Update own element
-        this.currentElement = nextElement;
+        this._currentElement = nextElement;
         const type = nextElement.type;
         const nextProps = nextElement.props;
 
@@ -98,6 +107,7 @@ export class CompositeComponent implements InternalComponent {
             Reconciler.receiveComponent(prevRenderedComponent, nextRenderedElement);
             return;
         }
+        console.log("reach here", nextRenderedElement);
 
         // If we reached this point, we need to unmount the previously
         // mounted component, mount the new one, and swap their nodes.
@@ -108,7 +118,7 @@ export class CompositeComponent implements InternalComponent {
         const nextRenderedComponent = instantiateComponent(nextRenderedElement);
         const nextNode = Reconciler.mountComponent(nextRenderedComponent);
 
-        this.renderedComponent = nextRenderedComponent;
+        this._renderedComponent = nextRenderedComponent;
 
         prevNode?.parentNode?.replaceChild(nextNode, prevNode);
     }
@@ -116,18 +126,129 @@ export class CompositeComponent implements InternalComponent {
     getHostNode() {
         // Ask the rendered component to provide it.
         // This will recursively drill down any composites.
-        return this.renderedComponent.getHostNode();
+        return this._renderedComponent.getHostNode();
     }
 
     performUpdateIfNecessary() {
         if (this._pendingStateQueue !== null) {
-            this.updateComponent(this.currentElement, this.currentElement);
+            this.updateComponent(this._currentElement, this._currentElement);
         }
     }
 
-    updateComponent(prevParentElement: React.ReactComponentElement<any>, nextParentElement: React.ReactComponentElement<any>) {
+    updateComponent(
+        prevParentElement: React.ReactComponentElement<any>,
+        nextParentElement: React.ReactComponentElement<any>
+    ) {
         console.log("here")
+
+        const instance = this._publicInstance;
+        assert(instance != null, `Attempted to update component ${this.getName()} that has` +
+            ` already been unmounted (or failed to mount).`)
+
+        let willReceive = false;
+        // Not a simple state update but a props update
+        if (prevParentElement !== nextParentElement) {
+            willReceive = true;
+        }
+
+        const prevProps = prevParentElement.props;
+        const nextProps = nextParentElement.props;
+        if (willReceive && instance.componentWillReceiveProps) {
+            invokeLifeCycle(instance, 'componentWillReceiveProps', nextProps);
+        }
+
+        const nextState = this._processPendingState(nextProps);
+
+        let shouldUpdate = true;
+        if (instance.shouldComponentUpdate) {
+            shouldUpdate = instance.shouldComponentUpdate(nextProps, nextState);
+        } else {
+            // TODO: use shallow equal for PureComponent
+        }
+
+        if (shouldUpdate) {
+            // Will set `this.props`, `this.state`.
+            this._performComponentUpdate(
+                nextParentElement,
+                nextProps,
+                nextState,
+            )
+        } else {
+            // If it's determined that a component should not update, we still want
+            // to set props and state but we shortcut the rest of the update.
+            this._currentElement = nextParentElement;
+            instance.props = nextProps;
+            instance.state = nextState;
+        }
+
     }
+
+    private _processPendingState(props: any) {
+        const instance = this._publicInstance;
+        const queue = this._pendingStateQueue;
+        this._pendingStateQueue = null;
+
+        if (!queue) {
+            return instance.state;
+        }
+
+        const nextState = Object.assign({}, instance.state);
+        queue.forEach(partialState => {
+            Object.assign(
+                nextState,
+                typeof partialState === 'function'
+                    ? partialState.call(instance, nextState, props)
+                    : partialState
+            );
+        })
+
+        return nextState;
+    }
+
+    private _performComponentUpdate(
+        nextElement: React.ReactComponentElement<any>,
+        nextProps: any,
+        nextState: any,
+    ) {
+        const instance = this._publicInstance;
+
+        let hasComponentDidUpdate = Boolean(instance.componentDidUpdate);
+        let prevProps;
+        let prevState;
+        if (hasComponentDidUpdate) {
+            prevProps = instance.props;
+            prevState = instance.state;
+        }
+
+        if (instance.componentWillUpdate) {
+            invokeLifeCycle(instance, 'componentWillUpdate', nextProps, nextState);
+        }
+
+        this._currentElement = nextElement;
+        instance.props = nextProps;
+        instance.state = nextState;
+
+        invokeLifeCycle(instance, 'componentDidUpdate', prevProps, prevState);
+    }
+
+    /**
+ * Get a text description of the component that can be used to identify it
+ * in error messages.
+ * @return {string} The name or null.
+ * @internal
+ */
+    getName() {
+        var type = this._currentElement.type;
+        var constructor = this._publicInstance && this._publicInstance.constructor;
+        return (
+            type.displayName ||
+            (constructor && constructor.displayName) ||
+            type.name ||
+            (constructor && constructor.name) ||
+            null
+        );
+    }
+
 }
 
 function invokeLifeCycle(obj: any, name: string, ...args: any[]) {

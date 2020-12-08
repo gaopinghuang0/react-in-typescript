@@ -5,14 +5,18 @@ import Reconciler from "../reconciler/Reconciler";
 
 // Credit: adapted from https://reactjs.org/docs/implementation-notes.html
 export class DOMComponent implements InternalComponent {
-    currentElement: React.ReactHTMLElement<any>;
+    _currentElement: React.ReactHTMLElement<any>;
     node: HTMLElement | null;
     renderedChildren: InternalComponent[];
 
     constructor(element: React.ReactHTMLElement<any>) {
-        this.currentElement = element;
+        this._currentElement = element;
         this.renderedChildren = [];
         this.node = null;
+    }
+
+    getPublicInstance() {
+        return this.node;
     }
 
     getHostNode(): HTMLElement | null {
@@ -20,7 +24,7 @@ export class DOMComponent implements InternalComponent {
     }
 
     mount() {
-        const { type, props } = this.currentElement;
+        const { type, props } = this._currentElement;
 
         const node = document.createElement(type);
         this.node = node;
@@ -52,10 +56,10 @@ export class DOMComponent implements InternalComponent {
 
     // Do "virtual DOM diffing"
     receive(nextElement: React.ReactHTMLElement<any>) {
-        const prevElement = this.currentElement;
+        const prevElement = this._currentElement;
         const prevProps = prevElement.props;
         const nextProps = nextElement.props;
-        this.currentElement = nextElement;
+        this._currentElement = nextElement;
 
         this.updateDomProperties(prevProps, nextProps);
         this.updateChildren(prevProps, nextProps);

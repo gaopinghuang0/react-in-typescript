@@ -36,6 +36,10 @@ class Link extends MyReact.Component {
         console.log('Link will Mount');
     }
 
+    componentDidMount() {
+        console.log('Link did Mount');
+    }
+
     componentWillUnmount() {
         console.log('Link will Unmount');
     }

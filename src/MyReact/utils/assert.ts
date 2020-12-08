@@ -1,7 +1,7 @@
 // Lightweight replacement for invariant/node assert
 
-export function assert(condition: any) {
+export function assert(condition: any, message?: string) {
     if (!condition) {
-        throw new Error('assertion failure');
+        throw new Error(message || 'assertion failure');
     }
 }

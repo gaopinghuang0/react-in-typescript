@@ -3,6 +3,7 @@ import { instantiateComponent } from "../reconciler/instantiateComponent";
 import { InternalComponent } from "../reconciler/InternalComponent";
 import Reconciler from '../reconciler/Reconciler'
 import { shouldUpdateComponent } from "../reconciler/shouldUpdateComponent";
+import { Component } from "..";
 
 const ROOT_KEY = "MyReactRootKey";
 let rootID = 1;
@@ -23,11 +24,14 @@ export const render = (element: React.ReactNode, container: HTMLElement | null |
     // First check if we've already rendered into this node.
     // If so, we'll be doing an update.
     // Otherwise we'll assume this is an initial render.
+    let instance: Component;
     if (isRoot(container)) {
-        update(element, container);
+        instance = update(element, container);
     } else {
-        mount(element, container);
+        instance = mount(element, container);
     }
+
+    return instance;
 }
 
 function mount(element: React.ReactNode, container: HTMLElement) {
@@ -37,6 +41,9 @@ function mount(element: React.ReactNode, container: HTMLElement) {
 
     const node = Reconciler.mountComponent(rootComponent, container);
     container.appendChild(node);
+
+    const publicInstance = rootComponent.getPublicInstance();
+    return publicInstance;
 }
 
 function update(element: React.ReactNode, container: HTMLElement) {
@@ -45,15 +52,15 @@ function update(element: React.ReactNode, container: HTMLElement) {
 
     // Destroy any existing tree
     const prevRootComponent = getInternalInstanceFromNode(container);
-    const prevElement = prevRootComponent.currentElement;
+    const prevElement = prevRootComponent._currentElement;
 
     if (shouldUpdateComponent(prevElement, element)) {
         Reconciler.receiveComponent(prevRootComponent, element);
-        return;
+        return prevRootComponent.getPublicInstance();
     } else {
         // Unmount and then mount a new one
         unmount(container);
-        mount(element, container);
+        return mount(element, container);
     }
 }
 

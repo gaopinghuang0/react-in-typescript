@@ -9,11 +9,6 @@ const UpdateQueue = {
         // This is where React would do queueing, storing a series
         // of partialStates. The Updater would apply those in a batch later.
 
-        if (typeof partialState === 'function') {
-            partialState = (partialState as Function)(publicInstance.state, publicInstance.props);
-        }
-        publicInstance.state = Object.assign({}, publicInstance.state, partialState);
-
         const internalInstance = InstanceMap.get(publicInstance) as CompositeComponent;
         if (!internalInstance || partialState == null) return;
 

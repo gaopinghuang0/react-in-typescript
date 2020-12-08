@@ -2,12 +2,14 @@ import { InternalComponent } from "./InternalComponent";
 
 
 export class EmptyComponent implements InternalComponent {
-    currentElement: null;
+    _currentElement: null;
 
     constructor() {
-        this.currentElement = null;
+        this._currentElement = null;
     }
-    toJSON(): void { }
+    getPublicInstance() {
+        throw new Error("Method not implemented.");
+    }
     mount(): Node {
         return document.createComment('Empty Node');
     }
