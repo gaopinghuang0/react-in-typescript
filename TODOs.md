@@ -1,5 +1,5 @@
 ## Current step
-* [ ] Implement `updateComponent` in CompositeComponent
+* [x] Implement `updateComponent` in CompositeComponent
 * [ ] Implement `updateComponent` in DOMComponent
 * [ ] Replace `update` with `UpdateQueue` so that the `receiveComponent` will be called in a batch, rather than at the root of `render`.
 * [ ] Implement batch update
@@ -8,6 +8,7 @@
 * [ ] Add PooledClass
 * [ ] Implement real virtual diff algorithm
 * [ ] Support Events
+* [ ] Support Context
 
 
 ## Next step

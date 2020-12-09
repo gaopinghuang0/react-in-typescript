@@ -17,12 +17,14 @@ export class CompositeComponent implements InternalComponent {
     _renderedComponent: InternalComponent;
     _publicInstance: any;
     _pendingStateQueue: object[] | null;
+    _pendingElement: React.ReactComponentElement<any> | null;
 
     constructor(element: React.ReactComponentElement<any>) {
         this._currentElement = element;
         this._renderedComponent = _sharedEmptyComponent;
         this._publicInstance = null;
         this._pendingStateQueue = null;
+        this._pendingElement = null;
     }
 
     getPublicInstance() {
@@ -76,51 +78,15 @@ export class CompositeComponent implements InternalComponent {
         Reconciler.unmountComponent(renderedComponent);
     }
 
-    // Do "virtual DOM diffing"
     receive(nextElement: React.ReactComponentElement<any>) {
-        // const prevPros = this.currentElement.props;
-        const publicInstance = this._publicInstance;
-        const prevRenderedComponent = this._renderedComponent;
-        const prevRenderedElement = prevRenderedComponent._currentElement;
+        const prevElement = this._currentElement;
 
-        // Update own element
-        this._currentElement = nextElement;
-        const type = nextElement.type;
-        const nextProps = nextElement.props;
+        this._pendingElement = null;
 
-        // Figure out what the next render() output is
-        let nextRenderedElement;
-        if (isClass(type)) {
-            // Class Component
-            invokeLifeCycle(publicInstance, 'componentWillUpdate', nextProps);
-            publicInstance.props = nextProps;
-            // Re-render
-            nextRenderedElement = publicInstance.render();
-        } else if (typeof type === 'function') {
-            // Functional Component
-            nextRenderedElement = type(nextProps);
-        }
-
-        // If the rendered element type has not changed,
-        // reuse the existing component instance and exit.
-        if (shouldUpdateComponent(prevRenderedElement, nextRenderedElement)) {
-            Reconciler.receiveComponent(prevRenderedComponent, nextRenderedElement);
-            return;
-        }
-        console.log("reach here", nextRenderedElement);
-
-        // If we reached this point, we need to unmount the previously
-        // mounted component, mount the new one, and swap their nodes.
-        const prevNode = prevRenderedComponent.getHostNode();
-
-        // Unmount the old child and mount a new child
-        Reconciler.unmountComponent(prevRenderedComponent);
-        const nextRenderedComponent = instantiateComponent(nextRenderedElement);
-        const nextNode = Reconciler.mountComponent(nextRenderedComponent);
-
-        this._renderedComponent = nextRenderedComponent;
-
-        prevNode?.parentNode?.replaceChild(nextNode, prevNode);
+        this.updateComponent(
+            prevElement,
+            nextElement,
+        )
     }
 
     getHostNode() {
@@ -139,8 +105,6 @@ export class CompositeComponent implements InternalComponent {
         prevParentElement: React.ReactComponentElement<any>,
         nextParentElement: React.ReactComponentElement<any>
     ) {
-        console.log("here")
-
         const instance = this._publicInstance;
         assert(instance != null, `Attempted to update component ${this.getName()} that has` +
             ` already been unmounted (or failed to mount).`)
@@ -151,7 +115,6 @@ export class CompositeComponent implements InternalComponent {
             willReceive = true;
         }
 
-        const prevProps = prevParentElement.props;
         const nextProps = nextParentElement.props;
         if (willReceive && instance.componentWillReceiveProps) {
             invokeLifeCycle(instance, 'componentWillReceiveProps', nextProps);
@@ -228,15 +191,62 @@ export class CompositeComponent implements InternalComponent {
         instance.props = nextProps;
         instance.state = nextState;
 
+        this._updateRenderedComponent(nextElement);
+
         invokeLifeCycle(instance, 'componentDidUpdate', prevProps, prevState);
     }
 
     /**
- * Get a text description of the component that can be used to identify it
- * in error messages.
- * @return {string} The name or null.
- * @internal
- */
+   * Call the component's `render` method and update the DOM accordingly.
+     */
+    _updateRenderedComponent(nextElement: React.ReactComponentElement<any>) {
+        // const prevPros = this.currentElement.props;
+        const prevRenderedComponent = this._renderedComponent;
+        const prevRenderedElement = prevRenderedComponent._currentElement;
+
+        const type = nextElement.type;
+        const nextProps = nextElement.props;
+
+        // Figure out what the next render() output is
+        let nextRenderedElement;
+        if (isClass(type)) {
+            // Class Component
+            const publicInstance = this._publicInstance;
+            publicInstance.props = nextProps;
+            // Re-render
+            nextRenderedElement = publicInstance.render();
+        } else if (typeof type === 'function') {
+            // Functional Component
+            nextRenderedElement = type(nextProps);
+        }
+
+        // If the rendered element type has not changed,
+        // reuse the existing component instance and exit.
+        if (shouldUpdateComponent(prevRenderedElement, nextRenderedElement)) {
+            Reconciler.receiveComponent(prevRenderedComponent, nextRenderedElement);
+            return;
+        }
+
+        // If we reached this point, we need to unmount the previously
+        // mounted component, mount the new one, and swap their nodes.
+        const prevNode = prevRenderedComponent.getHostNode();
+
+        // Unmount the old child and mount a new child
+        Reconciler.unmountComponent(prevRenderedComponent);
+        const nextRenderedComponent = instantiateComponent(nextRenderedElement);
+        const nextNode = Reconciler.mountComponent(nextRenderedComponent);
+
+        this._renderedComponent = nextRenderedComponent;
+
+        prevNode?.parentNode?.replaceChild(nextNode, prevNode);
+    }
+
+    /**
+     * Get a text description of the component that can be used to identify it
+     * in error messages.
+     * @return {string} The name or null.
+     * @internal
+     */
     getName() {
         var type = this._currentElement.type;
         var constructor = this._publicInstance && this._publicInstance.constructor;

@@ -1,0 +1,76 @@
+# Call stack of `ReactMount.render`
+
+## Option1 - for new mount:
+ReactMount.render
+ReactMount._renderSubtreeIntoContainer
+ReactMount._renderNewRootComponent
+instantiateReactComponent
+ReactUpdates.batchedUpdates
+
+## Label batchedUpdates:
+batchingStrategy.batchedUpdates
+ReactDefaultBatchingStrategy.batchedUpdates
+ReactDefaultBatchingStrategy.isBatchingUpdates = true;
+transaction.perform
+ReactDefaultBatchingStrategyTransaction.perform
+Transaction.perform
+Transaction.initializeAll
+transactionWrappers[i].initialize  ==> Good trick: throw the first error but initialize the remaining transactionWrappers
+emptyFunction
+Transaction.closeAll
+ReactDefaultBatchingStrategy.isBatchingUpdates = false;
+ReactUpdates.flushBatchedUpdates
+ReactUpdatesFlushTransaction.perform
+ReactUpdates.runBatchedUpdates
+ReactReconciler.performUpdateIfNecessary
+internalInstance.performUpdateIfNecessary
+
+### Option 1a - if this._pendingElement == null (and this._pendingStateQueue !== null):
+internalInstance.updateComponent
+internalInstance._processPendingState
+internalInstance._performComponentUpdate
+internalInstance._updateRenderedComponent
+
+#### Option 1aa - shouldUpdateReactComponent is true
+ReactReconciler.receiveComponent
+internalInstance.receiveComponent
+this._pendingElement = null
+internalInstance.updateComponent  // goto Option 1a
+
+#### Option 1ab - shouldUpdateReactComponent is false
+ReactReconciler.getHostNode
+ReactReconciler.unmountComponent
+instantiateReactComponent
+ReactReconciler.mountComponent
+this._replaceNodeWithMarkup
+ReactComponentEnvironment.replaceNodeWithMarkup
+
+### Option 1b - if internalInstance._pendingElement != null:
+ReactReconciler.receiveComponent(internalInstance._pendingElement)  // goto Option 1aa
+
+## Option 2 - for update:
+ReactMount.render
+ReactMount._renderSubtreeIntoContainer
+ReactMount._updateRootComponent
+ReactUpdateQueue.enqueueElementInternal
+internalInstance._pendingElement = nextElement;
+
+## Label enqueueUpdate:
+ReactUpdateQueue.enqueueUpdate
+ReactUpdates.enqueueUpdate
+batchingStrategy.batchedUpdates  or  dirtyComponents.push(component)
+// goto Label batchedUpdates
+
+
+# Call stack of `Component.setState`:
+
+this.updater.enqueueSetState
+// In ReactCompositeComponent.mountComponent
+// inst.updater = transaction.getUpdateQueue();
+// ReactReconcileTransaction.getUpdateQueue
+// namely, this.updater === ReactUpdateQueue
+ReactUpdateQueue.enqueueSetState
+internalInstance._pendingStateQueue = []
+internalInstance._pendingStateQueue.push(partialState)
+ReactUpdateQueue.enqueueUpdate
+// goto Label enqueueUpdate

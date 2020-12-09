@@ -54,7 +54,6 @@ export class DOMComponent implements InternalComponent {
         // TODO: remove event listeners and clears some caches.
     }
 
-    // Do "virtual DOM diffing"
     receive(nextElement: React.ReactHTMLElement<any>) {
         const prevElement = this._currentElement;
         const prevProps = prevElement.props;

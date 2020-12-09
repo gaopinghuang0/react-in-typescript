@@ -28,7 +28,6 @@ export class TextComponent implements InternalComponent {
         this.node = null;
     }
 
-    // Do "virtual DOM diffing"
     receive(nextElement: React.ReactText) {
         this._currentElement = nextElement;
         if (this.node) {

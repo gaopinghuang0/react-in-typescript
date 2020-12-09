@@ -26,10 +26,6 @@ class Link extends MyReact.Component {
     constructor(props: any) {
         super(props);
         this.state = { count: 0 };
-
-        setTimeout(() => {
-            this.setState({ count: this.state.count + 1 });
-        }, 1000);
     }
 
     componentWillMount() {
@@ -38,6 +34,10 @@ class Link extends MyReact.Component {
 
     componentDidMount() {
         console.log('Link did Mount');
+
+        setTimeout(() => {
+            this.setState({ count: this.state.count + 1 });
+        }, 1000);
     }
 
     componentWillUnmount() {
