@@ -2,7 +2,7 @@ import { assert } from "../utils/assert";
 import { instantiateComponent } from "../reconciler/instantiateComponent";
 import { InternalComponent } from "../reconciler/InternalComponent";
 import Reconciler from '../reconciler/Reconciler'
-import { shouldUpdateComponent } from "../reconciler/shouldUpdateComponent";
+import { shouldUpdateElement } from "../reconciler/shouldUpdateElement";
 import { Component } from "..";
 
 const ROOT_KEY = "MyReactRootKey";
@@ -54,8 +54,8 @@ function update(element: React.ReactNode, container: HTMLElement) {
     const prevRootComponent = getInternalInstanceFromNode(container);
     const prevElement = prevRootComponent._currentElement;
 
-    if (shouldUpdateComponent(prevElement, element)) {
-        Reconciler.receiveComponent(prevRootComponent, element);
+    if (shouldUpdateElement(prevElement, element)) {
+        Reconciler.receiveElement(prevRootComponent, element);
         return prevRootComponent.getPublicInstance();
     } else {
         // Unmount and then mount a new one
@@ -64,7 +64,7 @@ function update(element: React.ReactNode, container: HTMLElement) {
     }
 }
 
-function unmount(container: HTMLElement) {
+export function unmount(container: HTMLElement) {
     // Ensure we have a valid root node
     assert(container && isRoot(container));
 

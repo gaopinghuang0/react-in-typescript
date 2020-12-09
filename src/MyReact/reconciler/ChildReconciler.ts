@@ -54,7 +54,7 @@ const ChildReconciler = {
 
             // If we can update an existing internal instance,
             // just let it receive the next element and handle its own update.
-            Reconciler.receiveComponent(prevChild, nextChildren[i]);
+            Reconciler.receiveElement(prevChild, nextChildren[i]);
             nextRenderedChildren.push(prevChild);
         }
 

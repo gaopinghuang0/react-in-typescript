@@ -67,7 +67,7 @@ batchingStrategy.batchedUpdates  or  dirtyComponents.push(component)
 this.updater.enqueueSetState
 // In ReactCompositeComponent.mountComponent
 // inst.updater = transaction.getUpdateQueue();
-// ReactReconcileTransaction.getUpdateQueue
+// namely, ReactReconcileTransaction.getUpdateQueue -> ReactUpdateQueue
 // namely, this.updater === ReactUpdateQueue
 ReactUpdateQueue.enqueueSetState
 internalInstance._pendingStateQueue = []

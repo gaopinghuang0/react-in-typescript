@@ -7,6 +7,10 @@ describe('ReactES6Class', () => {
     let container;
     let attachedListener = null;
     let renderedName = null;
+    const freeze = function (expectation) {
+        Object.freeze(expectation);
+        return expectation;
+    };
 
     beforeEach(() => {
         MyReact = require('../..');
@@ -90,6 +94,25 @@ describe('ReactES6Class', () => {
 
     // TODO: test `getDerivedStateFromProps`
 
+    // it('renders only once when setting state in componentWillMount', () => {
+    //     let renderCount = 0;
+    //     class Foo extends MyReact.Component {
+    //         constructor(props) {
+    //             super(props);
+    //             this.state = { bar: props.initialValue };
+    //         }
+    //         componentWillMount() {
+    //             this.setState({ bar: 'bar' });
+    //         }
+    //         render() {
+    //             renderCount++;
+    //             return <span className={this.state.bar} />;
+    //         }
+    //     }
+    //     test(<Foo initialValue="foo" />, 'SPAN', 'bar');
+    //     expect(renderCount).toBe(1);
+    // });
+
     it('should render with null in the initial state property', () => {
         class Foo extends MyReact.Component {
             constructor() {
@@ -102,4 +125,56 @@ describe('ReactES6Class', () => {
         }
         test(<Foo />, 'SPAN', '');
     });
+
+    it('will call all the normal life cycle methods', () => {
+        let lifeCycles = [];
+        class Foo extends MyReact.Component {
+            constructor() {
+                super();
+                this.state = {};
+            }
+            componentWillMount() {
+                lifeCycles.push('will-mount');
+            }
+            componentDidMount() {
+                lifeCycles.push('did-mount');
+            }
+            componentWillReceiveProps(nextProps) {
+                lifeCycles.push('receive-props', nextProps);
+            }
+            shouldComponentUpdate(nextProps, nextState) {
+                lifeCycles.push('should-update', nextProps, nextState);
+                return true;
+            }
+            componentWillUpdate(nextProps, nextState) {
+                lifeCycles.push('will-update', nextProps, nextState);
+            }
+            componentDidUpdate(prevProps, prevState) {
+                lifeCycles.push('did-update', prevProps, prevState);
+            }
+            componentWillUnmount() {
+                lifeCycles.push('will-unmount');
+            }
+            render() {
+                return <span className={this.props.value} />;
+            }
+        }
+        test(<Foo value="foo" />, 'SPAN', 'foo');
+        expect(lifeCycles).toEqual(['will-mount', 'did-mount']);
+        lifeCycles = []; // reset
+        test(<Foo value="bar" />, 'SPAN', 'bar');
+        // prettier-ignore
+        expect(lifeCycles).toEqual([
+            'receive-props', freeze({ value: 'bar' }),
+            'should-update', freeze({ value: 'bar' }), {},
+            'will-update', freeze({ value: 'bar' }), {},
+            'did-update', freeze({ value: 'foo' }), {},
+        ]);
+        lifeCycles = []; // reset
+        MyReact.unmount(container);
+        expect(lifeCycles).toEqual(['will-unmount']);
+    });
+
+
+
 })

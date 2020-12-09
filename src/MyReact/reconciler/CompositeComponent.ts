@@ -2,7 +2,7 @@ import { isClass } from "../core/Component";
 import { instantiateComponent } from "./instantiateComponent";
 import { InternalComponent } from "./InternalComponent";
 import { EmptyComponent } from "./EmptyComponent";
-import { shouldUpdateComponent } from "./shouldUpdateComponent";
+import { shouldUpdateElement } from "./shouldUpdateElement";
 import Reconciler from './Reconciler'
 import { InstanceMap } from "./InstanceMap";
 import { assert } from "../utils/assert";
@@ -222,8 +222,8 @@ export class CompositeComponent implements InternalComponent {
 
         // If the rendered element type has not changed,
         // reuse the existing component instance and exit.
-        if (shouldUpdateComponent(prevRenderedElement, nextRenderedElement)) {
-            Reconciler.receiveComponent(prevRenderedComponent, nextRenderedElement);
+        if (shouldUpdateElement(prevRenderedElement, nextRenderedElement)) {
+            Reconciler.receiveElement(prevRenderedComponent, nextRenderedElement);
             return;
         }
 

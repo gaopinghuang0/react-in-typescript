@@ -12,12 +12,10 @@ export function createElement(type: string, config: any, ...args: React.ReactEle
     });
 
     const key = config.key || null;
-    let children;
     if (args.length === 1) {
-        children = args[0];
-    } else {
-        children = args;
+        props.children = args[0];
+    } else if (args.length >= 2) {
+        props.children = args;
     }
-    props.children = children;
     return { type, key, props }
 }

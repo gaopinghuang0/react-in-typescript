@@ -12,7 +12,8 @@ const Reconciler = {
     unmountComponent(internalInstance: InternalComponent) {
         internalInstance.unmount();
     },
-    receiveComponent(internalInstance: InternalComponent, nextElement: React.ReactNode) {
+    // It is called "receiveComponent" in React, but it actually receives Element.
+    receiveElement(internalInstance: InternalComponent, nextElement: React.ReactNode) {
         const prevElement = internalInstance._currentElement;
 
         if (nextElement === prevElement) {

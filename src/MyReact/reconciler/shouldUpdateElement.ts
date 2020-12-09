@@ -3,8 +3,10 @@
  * instance should be updated as opposed to being destroyed or replaced by a new
  * instance. Both arguments are elements. This ensures that this logic can
  * operate on stateless trees without any backing instance.
+ *
+ * It is called "shouldUpdateComponent" in React, but it actually checks Elements.
  */
-export function shouldUpdateComponent(prevElement: any, nextElement: any) {
+export function shouldUpdateElement(prevElement: any, nextElement: any) {
     var prevEmpty = prevElement === null || prevElement === false;
     var nextEmpty = nextElement === null || nextElement === false;
     if (prevEmpty || nextEmpty) {
