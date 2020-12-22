@@ -85,11 +85,29 @@ const element4 = (
     </div>
 )
 
-MyReact.render(element1, document.getElementById('root'));
+let renderCount = 0;
+class Foo extends MyReact.Component<{ initialValue: string }> {
+    state: { bar: string };
+
+    constructor(props: any) {
+        super(props);
+        this.state = { bar: props.initialValue };
+    }
+    componentWillMount() {
+        this.setState({ bar: 'bar' });
+    }
+    render() {
+        renderCount++;
+        console.log(renderCount);
+        return <span className={this.state.bar} />;
+    }
+}
+
+MyReact.render(<Foo initialValue="foo" />, document.getElementById('root'));
 // Should reuse existing DOM
-setTimeout(() => {
-    MyReact.render(element4, document.getElementById('root'));
-}, 1000)
+// setTimeout(() => {
+//     MyReact.render(element4, document.getElementById('root'));
+// }, 1000)
 
 // If you want to start measuring performance in your app, pass a function
 // to log results (for example: reportWebVitals(console.log))

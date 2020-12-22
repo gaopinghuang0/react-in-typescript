@@ -54,15 +54,6 @@ export class CompositeComponent implements InternalComponent {
 
             // Store a reference from the instance back to the internal representation
             InstanceMap.set(publicInstance, this);
-
-            invokeLifeCycle(publicInstance, 'componentWillMount');
-            // When mounting, calls to `setState` by `componentWillMount` will set
-            // `this._pendingStateQueue` without triggering a re-render.
-            if (publicInstance._pendingStateQueue) {
-                publicInstance.state = this._processPendingState(publicInstance.state);
-            }
-
-            renderedElement = publicInstance.render();
         } else {
             // Functional Component
             publicInstance = null;
@@ -70,11 +61,25 @@ export class CompositeComponent implements InternalComponent {
         }
 
         this._publicInstance = publicInstance;
+        this._pendingStateQueue = null;
+
+        if (publicInstance.componentWillMount) {
+            invokeLifeCycle(publicInstance, 'componentWillMount');
+            // When mounting, calls to `setState` by `componentWillMount` will set
+            // `this._pendingStateQueue` without triggering a re-render.
+            if (this._pendingStateQueue) {
+                publicInstance.state = this._processPendingState(publicInstance.state);
+            }
+        }
+
+        if (!renderedElement) {
+            renderedElement = publicInstance.render();
+        }
 
         // Instantiate the child internal instance according to the element.
-        const renderedComponent = instantiateComponent(renderedElement);
-        this._renderedComponent = renderedComponent;
-        const node = Reconciler.mountComponent(renderedComponent, transaction);
+        const child = instantiateComponent(renderedElement);
+        this._renderedComponent = child;
+        const node = Reconciler.mountComponent(child, transaction);
 
         if (publicInstance) {
             invokeLifeCycle(publicInstance, 'componentDidMount');
