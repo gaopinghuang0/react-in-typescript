@@ -1,7 +1,7 @@
 
 let MyReact;
 
-// Credit: adopted from React/src/__tests__/ReactES6Class-test.js
+// Credit: adopted from React/src/isomorphic/**/__tests__/ReactES6Class-test.js
 describe('ReactES6Class', () => {
     let Inner;
     let container;
@@ -111,6 +111,23 @@ describe('ReactES6Class', () => {
         }
         test(<Foo initialValue="foo" />, 'SPAN', 'bar');
         expect(renderCount).toBe(1);
+    });
+
+    it('should throw with non-object in the initial state property', () => {
+        [['an array'], 'a string', 1234].forEach(function (state) {
+            class Foo extends MyReact.Component {
+                constructor() {
+                    super();
+                    this.state = state;
+                }
+                render() {
+                    return <span />;
+                }
+            }
+            expect(() => test(<Foo />, 'SPAN', '')).toThrowError(
+                'Foo.state: must be set to an object or null',
+            );
+        });
     });
 
     it('should render with null in the initial state property', () => {

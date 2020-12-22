@@ -54,6 +54,15 @@ export class CompositeComponent implements InternalComponent {
 
             // Store a reference from the instance back to the internal representation
             InstanceMap.set(publicInstance, this);
+
+            let initialState = publicInstance.state;
+            if (initialState === undefined) {
+                publicInstance.state = initialState = null;
+            }
+            assert(
+                typeof initialState === 'object' && !Array.isArray(initialState),
+                `${this.getName()}.state: must be set to an object or null`
+            )
         } else {
             // Functional Component
             publicInstance = null;
