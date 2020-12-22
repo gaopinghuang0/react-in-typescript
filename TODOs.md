@@ -5,7 +5,8 @@
 * [ ] Implement batch update
   * [ ] Understand transaction.wrappers
   * [ ] Support transaction
-* [ ] Add PooledClass
+  * [ ] UnmountComponent in a batch
+* [ ] Add StatelessComponent to satisfy the assert(instance != null) in CompositeComponent.updateComponent().
 * [ ] Implement real virtual diff algorithm
 * [ ] Support Events
 * [ ] Support Context

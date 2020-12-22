@@ -3,64 +3,123 @@ import { instantiateComponent } from "../reconciler/instantiateComponent";
 import { InternalComponent } from "../reconciler/InternalComponent";
 import Reconciler from '../reconciler/Reconciler'
 import { shouldUpdateElement } from "../reconciler/shouldUpdateElement";
-import { Component } from "..";
+import { Component } from "../core/Component";
+import { createElement } from "../core/ReactElement";
+import ReactUpdates from "../reconciler/ReactUpdates";
+import ReconcileTransaction from "../transactions/ReconcileTransaction";
+import UpdateQueue from "../reconciler/UpdateQueue";
+import { CompositeComponent } from "../reconciler/CompositeComponent";
 
 const ROOT_KEY = "MyReactRootKey";
 let rootID = 1;
 
 // Used to track root instances.
-interface InstanceMap {
+interface RootInstanceMap {
     [key: string]: InternalComponent
 }
-const instancesByRootID: InstanceMap = {};
+const instancesByRootID: RootInstanceMap = {};
 
 function isRoot(node: HTMLElement) {
     return !!node.dataset[ROOT_KEY];
 }
 
-export const render = (element: React.ReactNode, container: HTMLElement | null | undefined) => {
+/**
+ * Add a component-like wrapper to the root element 
+ * so that the instantiated root component will always be CompositeComponent,
+ * rather than any other possible types of InternalComponent (DOMComponent, EmptyComponent).
+ * This greatly simplifies the type casting and also stores all top-level pending updates
+ * in a composite component.
+ */
+class TopLevelWrapper extends Component {
+    isReactComponent = true;
+
+    render() {
+        return this.props.children;
+    }
+}
+
+export function render(nextElement: React.ReactNode, container: HTMLElement | null | undefined) {
     if (container == null) return;
+
+    // Wrap an element with type React.ReactNode into an React.ReactComponentElement
+    const nextWrappedElement = createElement(
+        TopLevelWrapper,
+        null,
+        nextElement
+    ) as React.ReactComponentElement<any>;
 
     // First check if we've already rendered into this node.
     // If so, we'll be doing an update.
     // Otherwise we'll assume this is an initial render.
     let instance: Component;
     if (isRoot(container)) {
-        instance = update(element, container);
+        instance = update(nextWrappedElement, container);
     } else {
-        instance = mount(element, container);
+        instance = mount(nextWrappedElement, container);
     }
 
     return instance;
 }
 
-function mount(element: React.ReactNode, container: HTMLElement) {
-    const rootComponent = instantiateComponent(element);
+function mountComponentIntoContainer(
+    internalInstance: InternalComponent,
+    container: HTMLElement,
+    transaction: ReconcileTransaction
+) {
+    const node = Reconciler.mountComponent(internalInstance, transaction, container);
+    container.appendChild(node);
+}
+
+function batchedMountComponentIntoContainer(
+    internalInstance: InternalComponent,
+    container: HTMLElement
+) {
+    const transaction = new ReactUpdates.ReconcileTransaction!();
+    transaction.perform(
+        mountComponentIntoContainer,
+        null,
+        internalInstance,
+        container,
+        transaction,
+    )
+}
+
+function mount(nextElement: React.ReactComponentElement<any>, container: HTMLElement) {
+    // Root component will be CompositeComponent since the root element is wrapped earlier.
+    const rootComponent = instantiateComponent(nextElement) as CompositeComponent;
+
+    // The initial render is synchronous but any updates that happen during
+    // rendering, in componentWillMount or componentDidMount, will be batched
+    // according to the current batching strategy.
+    ReactUpdates.batchedUpdates(
+        batchedMountComponentIntoContainer,
+        rootComponent,
+        container,
+    )
 
     saveInternalInstanceToNode(container, rootComponent);
 
-    const node = Reconciler.mountComponent(rootComponent, container);
-    container.appendChild(node);
-
-    const publicInstance = rootComponent.getPublicInstance();
+    const publicInstance = rootComponent._renderedComponent.getPublicInstance();
     return publicInstance;
 }
 
-function update(element: React.ReactNode, container: HTMLElement) {
+function update(nextElement: React.ReactComponentElement<any>, container: HTMLElement) {
     // Ensure we have a valid root node
     assert(container && isRoot(container));
 
-    // Destroy any existing tree
-    const prevRootComponent = getInternalInstanceFromNode(container);
+    const prevRootComponent = getInternalInstanceFromNode(container) as CompositeComponent;
     const prevElement = prevRootComponent._currentElement;
 
-    if (shouldUpdateElement(prevElement, element)) {
-        Reconciler.receiveElement(prevRootComponent, element);
-        return prevRootComponent.getPublicInstance();
+    if (shouldUpdateElement(prevElement, nextElement)) {
+        UpdateQueue.enqueueElementInternal(
+            prevRootComponent,
+            nextElement,
+        )
+        return prevRootComponent._renderedComponent.getPublicInstance();
     } else {
         // Unmount and then mount a new one
         unmount(container);
-        return mount(element, container);
+        return mount(nextElement, container);
     }
 }
 

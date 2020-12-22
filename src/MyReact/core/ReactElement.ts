@@ -1,9 +1,10 @@
 
 const filteredProps = new Set(['key', 'ref', '__self', '__source']);
 
-export function createElement(type: string, config: any, ...args: React.ReactElement[]): React.ReactElement {
+export function createElement(type: any, config: any, ...args: React.ReactNode[]): React.ReactElement {
     // filter out some internal props
     const props: { [key: string]: any } = {};
+    config = config || {};
 
     Object.keys(config).forEach(propName => {
         if (!filteredProps.has(propName)) {

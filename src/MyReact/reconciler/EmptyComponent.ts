@@ -18,7 +18,4 @@ export class EmptyComponent implements InternalComponent {
     }
     unmount(): void { }
     receive(nextElement: any) { }
-    performUpdateIfNecessary(): void {
-        throw new Error("Method not implemented.");
-    }
 }

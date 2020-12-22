@@ -35,9 +35,9 @@ class Link extends MyReact.Component {
     componentDidMount() {
         console.log('Link did Mount');
 
-        setTimeout(() => {
-            this.setState({ count: this.state.count + 1 });
-        }, 1000);
+        // setTimeout(() => {
+        //     this.setState({ count: this.state.count + 1 });
+        // }, 1000);
     }
 
     componentWillUnmount() {
@@ -55,7 +55,7 @@ class Link extends MyReact.Component {
     render() {
         const { children } = this.props;
         return (
-            <a href="http://google.com">{children}</a>
+            <a href="http://google.com">{children} {this.state.count}</a>
         )
     }
 }
@@ -87,9 +87,9 @@ const element4 = (
 
 MyReact.render(element1, document.getElementById('root'));
 // Should reuse existing DOM
-// setTimeout(() => {
-//     MyReact.render(element4, document.getElementById('root'));
-// }, 1000)
+setTimeout(() => {
+    MyReact.render(element4, document.getElementById('root'));
+}, 1000)
 
 // If you want to start measuring performance in your app, pass a function
 // to log results (for example: reportWebVitals(console.log))

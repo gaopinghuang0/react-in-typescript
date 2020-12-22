@@ -1,3 +1,4 @@
+import ReconcileTransaction from "../transactions/ReconcileTransaction";
 import { instantiateComponent } from "./instantiateComponent";
 import { InternalComponent } from "./InternalComponent";
 import Reconciler from "./Reconciler";
@@ -5,6 +6,7 @@ import Reconciler from "./Reconciler";
 
 const ChildReconciler = {
     updateChildren(
+        transaction: ReconcileTransaction,
         prevChildren: React.ReactElement[],
         nextChildren: React.ReactElement[],
         prevRenderedChildren: InternalComponent[],
@@ -24,7 +26,7 @@ const ChildReconciler = {
             // internal instance, mount it, and use its node.
             if (!prevChildren[i]) {
                 let nextChild = instantiateComponent(nextChildren[i]);
-                let node = Reconciler.mountComponent(nextChild);
+                let node = Reconciler.mountComponent(nextChild, transaction);
 
                 // Record that we need to append a node
                 operationQueue.push({ type: 'ADD', node });
@@ -44,7 +46,7 @@ const ChildReconciler = {
                 Reconciler.unmountComponent(prevChild);
 
                 let nextChild = instantiateComponent(nextChildren[i]);
-                let nextNode = Reconciler.mountComponent(nextChild);
+                let nextNode = Reconciler.mountComponent(nextChild, transaction);
 
                 // Record that we need to swap the nodes
                 operationQueue.push({ type: 'REPLACE', prevNode, nextNode });
@@ -54,7 +56,7 @@ const ChildReconciler = {
 
             // If we can update an existing internal instance,
             // just let it receive the next element and handle its own update.
-            Reconciler.receiveElement(prevChild, nextChildren[i]);
+            Reconciler.receiveElement(prevChild, nextChildren[i], transaction);
             nextRenderedChildren.push(prevChild);
         }
 

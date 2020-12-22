@@ -1,12 +1,9 @@
 
 
-import HostComponent from "../reconciler/HostComponent";
-import { DOMComponent } from "./DOMComponent";
 import { render, unmount } from "./DOMRenderer";
+import { doDefaultInjection } from "./DefaultInjection";
 
-
-// Do the injection here
-HostComponent.inject(DOMComponent);
+doDefaultInjection();
 
 export {
     render,

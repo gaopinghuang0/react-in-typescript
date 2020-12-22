@@ -2,6 +2,7 @@ import ChildReconciler from "../reconciler/ChildReconciler";
 import { instantiateComponent } from "../reconciler/instantiateComponent";
 import { InternalComponent } from "../reconciler/InternalComponent";
 import Reconciler from "../reconciler/Reconciler";
+import ReconcileTransaction from "../transactions/ReconcileTransaction";
 
 // Credit: adapted from https://reactjs.org/docs/implementation-notes.html
 export class DOMComponent implements InternalComponent {
@@ -23,13 +24,13 @@ export class DOMComponent implements InternalComponent {
         return this.node;
     }
 
-    mount() {
+    mount(transaction: ReconcileTransaction) {
         const { type, props } = this._currentElement;
 
         const node = document.createElement(type);
         this.node = node;
 
-        this.setAttributes(node, props);
+        this._setAttributes(node, props);
 
         let children = props.children || [];
         if (!Array.isArray(children)) {
@@ -40,7 +41,7 @@ export class DOMComponent implements InternalComponent {
         this.renderedChildren = renderedChildren;
 
         renderedChildren
-            .map(child => Reconciler.mountComponent(child))
+            .map(child => Reconciler.mountComponent(child, transaction))
             .forEach(childNode => node.append(childNode));
 
         return node;
@@ -54,17 +55,17 @@ export class DOMComponent implements InternalComponent {
         // TODO: remove event listeners and clears some caches.
     }
 
-    receive(nextElement: React.ReactHTMLElement<any>) {
+    receive(nextElement: React.ReactHTMLElement<any>, transaction: ReconcileTransaction) {
         const prevElement = this._currentElement;
         const prevProps = prevElement.props;
         const nextProps = nextElement.props;
         this._currentElement = nextElement;
 
-        this.updateDomProperties(prevProps, nextProps);
-        this.updateChildren(prevProps, nextProps);
+        this._updateDomProperties(prevProps, nextProps);
+        this._updateChildren(prevProps, nextProps, transaction);
     }
 
-    private setAttributes(node: HTMLElement | null, props: React.AllHTMLAttributes<any>) {
+    private _setAttributes(node: HTMLElement | null, props: React.AllHTMLAttributes<any>) {
         if (!node) return;
 
         Object.keys(props).forEach(propName => {
@@ -78,7 +79,7 @@ export class DOMComponent implements InternalComponent {
         });
     }
 
-    private removeAttributes(node: HTMLElement | null, props: React.AllHTMLAttributes<any>) {
+    private _removeAttributes(node: HTMLElement | null, props: React.AllHTMLAttributes<any>) {
         if (!node) return;
 
         Object.keys(props).forEach(propName => {
@@ -92,14 +93,18 @@ export class DOMComponent implements InternalComponent {
         });
     }
 
-    private updateDomProperties(prevProps: React.AllHTMLAttributes<any>, nextProps: React.AllHTMLAttributes<any>) {
+    private _updateDomProperties(prevProps: React.AllHTMLAttributes<any>, nextProps: React.AllHTMLAttributes<any>) {
         // Remove old attributes.
-        this.removeAttributes(this.node, prevProps);
+        this._removeAttributes(this.node, prevProps);
         // Set next attributes.
-        this.setAttributes(this.node, nextProps);
+        this._setAttributes(this.node, nextProps);
     }
 
-    private updateChildren(prevProps: React.AllHTMLAttributes<any>, nextProps: React.AllHTMLAttributes<any>) {
+    private _updateChildren(
+        prevProps: React.AllHTMLAttributes<any>,
+        nextProps: React.AllHTMLAttributes<any>,
+        transaction: ReconcileTransaction
+    ) {
         // These are arrays of React elements:
         let _prevChildren = prevProps.children || [];
         if (!Array.isArray(_prevChildren)) {
@@ -121,6 +126,7 @@ export class DOMComponent implements InternalComponent {
         var operationQueue: any[] = [];
 
         ChildReconciler.updateChildren(
+            transaction,
             prevChildren,
             nextChildren,
             prevRenderedChildren,
@@ -131,10 +137,10 @@ export class DOMComponent implements InternalComponent {
         // Point the list of rendered children to the updated version.
         this.renderedChildren = nextRenderedChildren;
 
-        this.processOperationQueue(operationQueue);
+        this._processOperationQueue(operationQueue);
     }
 
-    private processOperationQueue(operationQueue: any[]) {
+    private _processOperationQueue(operationQueue: any[]) {
         while (operationQueue.length > 0) {
             let operation = operationQueue.shift();
             switch (operation.type) {
@@ -149,8 +155,5 @@ export class DOMComponent implements InternalComponent {
                     break;
             }
         }
-    }
-    performUpdateIfNecessary(): void {
-        throw new Error("Method not implemented.");
     }
 }

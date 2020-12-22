@@ -48,6 +48,8 @@ ReactComponentEnvironment.replaceNodeWithMarkup
 ### Option 1b - if internalInstance._pendingElement != null:
 ReactReconciler.receiveComponent(internalInstance._pendingElement)  // goto Option 1aa
 
+ReactUpdatesFlushTransaction.callbackQueue.enqueue
+
 ## Option 2 - for update:
 ReactMount.render
 ReactMount._renderSubtreeIntoContainer

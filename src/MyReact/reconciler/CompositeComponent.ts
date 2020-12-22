@@ -6,10 +6,13 @@ import { shouldUpdateElement } from "./shouldUpdateElement";
 import Reconciler from './Reconciler'
 import { InstanceMap } from "./InstanceMap";
 import { assert } from "../utils/assert";
+import ReconcileTransaction from "../transactions/ReconcileTransaction";
 
 const _sharedEmptyComponent = new EmptyComponent();
 
 // Credit: adapted from https://reactjs.org/docs/implementation-notes.html
+
+let nextMountID = 1;
 
 // Internal wrapper for Class component and functional component
 export class CompositeComponent implements InternalComponent {
@@ -18,6 +21,8 @@ export class CompositeComponent implements InternalComponent {
     _publicInstance: any;
     _pendingStateQueue: object[] | null;
     _pendingElement: React.ReactComponentElement<any> | null;
+    _updateBatchNumber: number | null;
+    _mountOrder: number;
 
     constructor(element: React.ReactComponentElement<any>) {
         this._currentElement = element;
@@ -25,6 +30,8 @@ export class CompositeComponent implements InternalComponent {
         this._publicInstance = null;
         this._pendingStateQueue = null;
         this._pendingElement = null;
+        this._updateBatchNumber = null;
+        this._mountOrder = 0;
     }
 
     getPublicInstance() {
@@ -32,9 +39,11 @@ export class CompositeComponent implements InternalComponent {
         return this._publicInstance;
     }
 
-    mount() {
+    mount(transaction: ReconcileTransaction) {
         const element = this._currentElement;
         const { type, props } = element;
+
+        this._mountOrder = nextMountID++;
 
         let renderedElement;
         let publicInstance;
@@ -47,6 +56,12 @@ export class CompositeComponent implements InternalComponent {
             InstanceMap.set(publicInstance, this);
 
             invokeLifeCycle(publicInstance, 'componentWillMount');
+            // When mounting, calls to `setState` by `componentWillMount` will set
+            // `this._pendingStateQueue` without triggering a re-render.
+            if (publicInstance._pendingStateQueue) {
+                publicInstance.state = this._processPendingState(publicInstance.state);
+            }
+
             renderedElement = publicInstance.render();
         } else {
             // Functional Component
@@ -59,7 +74,7 @@ export class CompositeComponent implements InternalComponent {
         // Instantiate the child internal instance according to the element.
         const renderedComponent = instantiateComponent(renderedElement);
         this._renderedComponent = renderedComponent;
-        const node = Reconciler.mountComponent(renderedComponent);
+        const node = Reconciler.mountComponent(renderedComponent, transaction);
 
         if (publicInstance) {
             invokeLifeCycle(publicInstance, 'componentDidMount');
@@ -78,12 +93,13 @@ export class CompositeComponent implements InternalComponent {
         Reconciler.unmountComponent(renderedComponent);
     }
 
-    receive(nextElement: React.ReactComponentElement<any>) {
+    receive(nextElement: React.ReactComponentElement<any>, transaction: ReconcileTransaction) {
         const prevElement = this._currentElement;
 
         this._pendingElement = null;
 
         this.updateComponent(
+            transaction,
             prevElement,
             nextElement,
         )
@@ -95,13 +111,23 @@ export class CompositeComponent implements InternalComponent {
         return this._renderedComponent.getHostNode();
     }
 
-    performUpdateIfNecessary() {
-        if (this._pendingStateQueue !== null) {
-            this.updateComponent(this._currentElement, this._currentElement);
+    performUpdateIfNecessary(transaction: ReconcileTransaction) {
+        if (this._pendingElement != null) {
+            Reconciler.receiveElement(
+                this,
+                this._pendingElement,
+                transaction,
+            )
+        }
+        else if (this._pendingStateQueue !== null) {
+            this.updateComponent(transaction, this._currentElement, this._currentElement);
+        } else {
+            this._updateBatchNumber = null;
         }
     }
 
     updateComponent(
+        transaction: ReconcileTransaction,
         prevParentElement: React.ReactComponentElement<any>,
         nextParentElement: React.ReactComponentElement<any>
     ) {
@@ -135,6 +161,7 @@ export class CompositeComponent implements InternalComponent {
                 nextParentElement,
                 nextProps,
                 nextState,
+                transaction
             )
         } else {
             // If it's determined that a component should not update, we still want
@@ -172,6 +199,7 @@ export class CompositeComponent implements InternalComponent {
         nextElement: React.ReactComponentElement<any>,
         nextProps: any,
         nextState: any,
+        transaction: ReconcileTransaction,
     ) {
         const instance = this._publicInstance;
 
@@ -191,7 +219,7 @@ export class CompositeComponent implements InternalComponent {
         instance.props = nextProps;
         instance.state = nextState;
 
-        this._updateRenderedComponent(nextElement);
+        this._updateRenderedComponent(transaction, nextElement);
 
         invokeLifeCycle(instance, 'componentDidUpdate', prevProps, prevState);
     }
@@ -199,7 +227,7 @@ export class CompositeComponent implements InternalComponent {
     /**
    * Call the component's `render` method and update the DOM accordingly.
      */
-    _updateRenderedComponent(nextElement: React.ReactComponentElement<any>) {
+    _updateRenderedComponent(transaction: ReconcileTransaction, nextElement: React.ReactComponentElement<any>) {
         // const prevPros = this.currentElement.props;
         const prevRenderedComponent = this._renderedComponent;
         const prevRenderedElement = prevRenderedComponent._currentElement;
@@ -223,7 +251,7 @@ export class CompositeComponent implements InternalComponent {
         // If the rendered element type has not changed,
         // reuse the existing component instance and exit.
         if (shouldUpdateElement(prevRenderedElement, nextRenderedElement)) {
-            Reconciler.receiveElement(prevRenderedComponent, nextRenderedElement);
+            Reconciler.receiveElement(prevRenderedComponent, nextRenderedElement, transaction);
             return;
         }
 
@@ -234,7 +262,7 @@ export class CompositeComponent implements InternalComponent {
         // Unmount the old child and mount a new child
         Reconciler.unmountComponent(prevRenderedComponent);
         const nextRenderedComponent = instantiateComponent(nextRenderedElement);
-        const nextNode = Reconciler.mountComponent(nextRenderedComponent);
+        const nextNode = Reconciler.mountComponent(nextRenderedComponent, transaction);
 
         this._renderedComponent = nextRenderedComponent;
 
@@ -244,10 +272,8 @@ export class CompositeComponent implements InternalComponent {
     /**
      * Get a text description of the component that can be used to identify it
      * in error messages.
-     * @return {string} The name or null.
-     * @internal
      */
-    getName() {
+    getName(): string | null {
         var type = this._currentElement.type;
         var constructor = this._publicInstance && this._publicInstance.constructor;
         return (

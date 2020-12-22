@@ -94,24 +94,24 @@ describe('ReactES6Class', () => {
 
     // TODO: test `getDerivedStateFromProps`
 
-    // it('renders only once when setting state in componentWillMount', () => {
-    //     let renderCount = 0;
-    //     class Foo extends MyReact.Component {
-    //         constructor(props) {
-    //             super(props);
-    //             this.state = { bar: props.initialValue };
-    //         }
-    //         componentWillMount() {
-    //             this.setState({ bar: 'bar' });
-    //         }
-    //         render() {
-    //             renderCount++;
-    //             return <span className={this.state.bar} />;
-    //         }
-    //     }
-    //     test(<Foo initialValue="foo" />, 'SPAN', 'bar');
-    //     expect(renderCount).toBe(1);
-    // });
+    it('renders only once when setting state in componentWillMount', () => {
+        let renderCount = 0;
+        class Foo extends MyReact.Component {
+            constructor(props) {
+                super(props);
+                this.state = { bar: props.initialValue };
+            }
+            componentWillMount() {
+                this.setState({ bar: 'bar' });
+            }
+            render() {
+                renderCount++;
+                return <span className={this.state.bar} />;
+            }
+        }
+        test(<Foo initialValue="foo" />, 'SPAN', 'bar');
+        expect(renderCount).toBe(1);
+    });
 
     it('should render with null in the initial state property', () => {
         class Foo extends MyReact.Component {

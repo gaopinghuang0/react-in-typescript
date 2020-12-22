@@ -34,7 +34,4 @@ export class TextComponent implements InternalComponent {
             this.node.textContent = nextElement.toString();
         }
     }
-    performUpdateIfNecessary(): void {
-        throw new Error("Method not implemented.");
-    }
 }
