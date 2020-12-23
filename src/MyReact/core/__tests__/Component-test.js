@@ -143,6 +143,45 @@ describe('ReactES6Class', () => {
         test(<Foo />, 'SPAN', '');
     });
 
+    // TODO:
+    // it('setState through an event handler', () => {
+    //     class Foo extends React.Component {
+    //       constructor(props) {
+    //         super(props);
+    //         this.state = {bar: props.initialValue};
+    //       }
+    //       handleClick() {
+    //         this.setState({bar: 'bar'});
+    //       }
+    //       render() {
+    //         return (
+    //           <Inner name={this.state.bar} onClick={this.handleClick.bind(this)} />
+    //         );
+    //       }
+    //     }
+    //     test(<Foo initialValue="foo" />, 'DIV', 'foo');
+    //     attachedListener();
+    //     expect(renderedName).toBe('bar');
+    //   });
+
+    // TODO:
+    //   it('should not implicitly bind event handlers', () => {
+    //     class Foo extends React.Component {
+    //       constructor(props) {
+    //         super(props);
+    //         this.state = {bar: props.initialValue};
+    //       }
+    //       handleClick() {
+    //         this.setState({bar: 'bar'});
+    //       }
+    //       render() {
+    //         return <Inner name={this.state.bar} onClick={this.handleClick} />;
+    //       }
+    //     }
+    //     test(<Foo initialValue="foo" />, 'DIV', 'foo');
+    //     expect(attachedListener).toThrow();
+    //   });
+
     it('will call all the normal life cycle methods', () => {
         let lifeCycles = [];
         class Foo extends MyReact.Component {
@@ -192,6 +231,19 @@ describe('ReactES6Class', () => {
         expect(lifeCycles).toEqual(['will-unmount']);
     });
 
-
+    it('does not warn about getInitialState() on class components if state is also defined.', () => {
+        jest.spyOn(console, 'error');
+        class Foo extends MyReact.Component {
+            state = this.getInitialState();
+            getInitialState() {
+                return {};
+            }
+            render() {
+                return <span className="foo" />;
+            }
+        }
+        test(<Foo />, 'SPAN', 'foo');
+        expect(console.error.mock.calls.length).toBe(0);
+    });
 
 })

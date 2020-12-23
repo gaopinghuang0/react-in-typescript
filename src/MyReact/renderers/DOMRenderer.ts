@@ -124,6 +124,11 @@ function update(nextElement: React.ReactComponentElement<any>, container: HTMLEl
 }
 
 export function unmount(container: HTMLElement) {
+    assert(
+        isValidContainer(container),
+        'unmount(...): Target container is not a DOM element.',
+    );
+
     // Ensure we have a valid root node
     assert(container && isRoot(container));
 
@@ -154,4 +159,25 @@ function getInternalInstanceFromNode(node: HTMLElement) {
 function removeChildren(node: HTMLElement) {
     // [].slice.call(node.childNodes).forEach(node.removeChild, node);
     node.innerHTML = '';
+}
+
+
+const ELEMENT_NODE_TYPE = 1;
+const DOC_NODE_TYPE = 9;
+const DOCUMENT_FRAGMENT_NODE_TYPE = 11;
+
+/**
+ * True if the supplied DOM node is a valid node element.
+ *
+ * @param {?DOMElement} node The candidate DOM node.
+ * @return {boolean} True if the DOM is a valid DOM node.
+ * @internal
+ */
+function isValidContainer(node?: HTMLElement) {
+    return !!(
+        node &&
+        (node.nodeType === ELEMENT_NODE_TYPE ||
+            node.nodeType === DOC_NODE_TYPE ||
+            node.nodeType === DOCUMENT_FRAGMENT_NODE_TYPE)
+    );
 }
