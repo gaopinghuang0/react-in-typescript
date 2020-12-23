@@ -7,28 +7,34 @@ import ReconcileTransaction from "../transactions/ReconcileTransaction";
 // Credit: adapted from https://reactjs.org/docs/implementation-notes.html
 export class DOMComponent implements InternalComponent {
     _currentElement: React.ReactHTMLElement<any>;
-    node: HTMLElement | null;
-    renderedChildren: InternalComponent[];
+    _hostNode: Node | null;
+    _hostParent: DOMComponent | null;  // the parent component instance
+    _renderedChildren: InternalComponent[];
+    _flags: number;
+    _domID: number;
 
     constructor(element: React.ReactHTMLElement<any>) {
         this._currentElement = element;
-        this.renderedChildren = [];
-        this.node = null;
+        this._renderedChildren = [];
+        this._hostNode = null;
+        this._hostParent = null;
+        this._flags = 0;
+        this._domID = 0;
     }
 
     getPublicInstance() {
-        return this.node;
+        return this._hostNode;
     }
 
-    getHostNode(): HTMLElement | null {
-        return this.node;
+    getHostNode(): Node | null {
+        return this._hostNode;
     }
 
     mount(transaction: ReconcileTransaction) {
         const { type, props } = this._currentElement;
 
         const node = document.createElement(type);
-        this.node = node;
+        this._hostNode = node;
 
         this._setAttributes(node, props);
 
@@ -38,7 +44,7 @@ export class DOMComponent implements InternalComponent {
         }
 
         const renderedChildren = (children as React.ReactElement[]).map(instantiateComponent);
-        this.renderedChildren = renderedChildren;
+        this._renderedChildren = renderedChildren;
 
         renderedChildren
             .map(child => Reconciler.mountComponent(child, transaction))
@@ -49,7 +55,7 @@ export class DOMComponent implements InternalComponent {
 
     unmount() {
         // Unmount all the children
-        const renderedChildren = this.renderedChildren;
+        const renderedChildren = this._renderedChildren;
         renderedChildren.forEach(child => Reconciler.unmountComponent(child));
 
         // TODO: remove event listeners and clears some caches.
@@ -95,9 +101,9 @@ export class DOMComponent implements InternalComponent {
 
     private _updateDomProperties(prevProps: React.AllHTMLAttributes<any>, nextProps: React.AllHTMLAttributes<any>) {
         // Remove old attributes.
-        this._removeAttributes(this.node, prevProps);
+        this._removeAttributes(this._hostNode as HTMLElement, prevProps);
         // Set next attributes.
-        this._setAttributes(this.node, nextProps);
+        this._setAttributes(this._hostNode as HTMLElement, nextProps);
     }
 
     private _updateChildren(
@@ -119,7 +125,7 @@ export class DOMComponent implements InternalComponent {
         const nextChildren = (_nextChildren as React.ReactElement[])
 
         // These are arrays of internal instances:
-        var prevRenderedChildren = this.renderedChildren;
+        var prevRenderedChildren = this._renderedChildren;
         var nextRenderedChildren: InternalComponent[] = [];
 
         // As we iterate over children, we will add operations to the array.
@@ -135,7 +141,7 @@ export class DOMComponent implements InternalComponent {
         )
 
         // Point the list of rendered children to the updated version.
-        this.renderedChildren = nextRenderedChildren;
+        this._renderedChildren = nextRenderedChildren;
 
         this._processOperationQueue(operationQueue);
     }
@@ -145,13 +151,13 @@ export class DOMComponent implements InternalComponent {
             let operation = operationQueue.shift();
             switch (operation.type) {
                 case 'ADD':
-                    this.node?.appendChild(operation.node);
+                    this._hostNode?.appendChild(operation.node);
                     break;
                 case 'REPLACE':
-                    this.node?.replaceChild(operation.nextNode, operation.prevNode);
+                    this._hostNode?.replaceChild(operation.nextNode, operation.prevNode);
                     break;
                 case 'REMOVE':
-                    this.node?.removeChild(operation.node);
+                    this._hostNode?.removeChild(operation.node);
                     break;
             }
         }

@@ -19,6 +19,7 @@ const Reconciler = {
     unmountComponent(internalInstance: InternalComponent) {
         internalInstance.unmount();
     },
+
     // It is called "receiveComponent" in React, but it actually receives Element.
     receiveElement(
         internalInstance: InternalComponent,

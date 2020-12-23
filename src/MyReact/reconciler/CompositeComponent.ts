@@ -7,6 +7,7 @@ import Reconciler from './Reconciler'
 import { InstanceMap } from "./InstanceMap";
 import { assert } from "../utils/assert";
 import ReconcileTransaction from "../transactions/ReconcileTransaction";
+import { getNodeTypes, NodeTypes } from "./NodeTypes";
 
 const _sharedEmptyComponent = new EmptyComponent();
 
@@ -22,6 +23,7 @@ export class CompositeComponent implements InternalComponent {
     _pendingStateQueue: object[] | null;
     _pendingElement: React.ReactComponentElement<any> | null;
     _updateBatchNumber: number | null;
+    _renderedNodeType: NodeTypes | null;
     _mountOrder: number;
 
     constructor(element: React.ReactComponentElement<any>) {
@@ -31,6 +33,7 @@ export class CompositeComponent implements InternalComponent {
         this._pendingStateQueue = null;
         this._pendingElement = null;
         this._updateBatchNumber = null;
+        this._renderedNodeType = null;
         this._mountOrder = 0;
     }
 
@@ -85,6 +88,9 @@ export class CompositeComponent implements InternalComponent {
             renderedElement = publicInstance.render();
         }
 
+        const nodeType = getNodeTypes(renderedElement);
+        this._renderedNodeType = nodeType;
+
         // Instantiate the child internal instance according to the element.
         const child = instantiateComponent(renderedElement);
         this._renderedComponent = child;
@@ -103,8 +109,17 @@ export class CompositeComponent implements InternalComponent {
             invokeLifeCycle(publicInstance, 'componentWillUnmount');
         }
 
-        const renderedComponent = this._renderedComponent;
-        Reconciler.unmountComponent(renderedComponent);
+        if (this._renderedComponent) {
+            const renderedComponent = this._renderedComponent;
+            Reconciler.unmountComponent(renderedComponent);
+            this._renderedNodeType = null;
+            this._publicInstance = null;
+        }
+
+        this._pendingElement = null;
+        this._pendingStateQueue = null;
+
+        InstanceMap.delete(publicInstance);
     }
 
     receive(nextElement: React.ReactComponentElement<any>, transaction: ReconcileTransaction) {

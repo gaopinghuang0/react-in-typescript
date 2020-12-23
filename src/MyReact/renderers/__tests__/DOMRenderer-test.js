@@ -89,4 +89,13 @@ describe('DOMRenderer', () => {
         expect(instance1 === instance2).toBe(true);
     });
 
+    it('should not warn if mounting into non-empty node', () => {
+        var container = document.createElement('container');
+        container.innerHTML = '<div></div>';
+
+        jest.spyOn(console, 'error');
+        ReactMount.render(<div />, container);
+        expect(console.error.mock.calls.length).toBe(0);
+    });
+
 })
