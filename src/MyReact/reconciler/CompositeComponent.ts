@@ -169,6 +169,7 @@ export class CompositeComponent implements InternalComponent {
             // TODO: use shallow equal for PureComponent
         }
 
+        this._updateBatchNumber = null;
         if (shouldUpdate) {
             // Will set `this.props`, `this.state`.
             this._performComponentUpdate(

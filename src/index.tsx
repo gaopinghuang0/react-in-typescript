@@ -86,24 +86,25 @@ const element4 = (
 )
 
 let renderCount = 0;
-class Foo extends MyReact.Component<{ initialValue: string }> {
-    state: { bar: string };
+class Foo extends MyReact.Component<{ text: string }> {
 
-    constructor(props: any) {
-        super(props);
-        this.state = { bar: props.initialValue };
+    componentDidMount() {
+        console.log("componentDidMount")
     }
-    componentWillMount() {
-        this.setState({ bar: 'bar' });
+    componentWillUnmount() {
+        console.log("componentWillUnmount")
     }
     render() {
-        renderCount++;
-        console.log(renderCount);
-        return <span className={this.state.bar} />;
+        return <span>{this.props.text}</span>;
     }
 }
 
-MyReact.render(<Foo initialValue="foo" />, document.getElementById('root'));
+MyReact.render(<Foo text="orange" key="A" />, document.getElementById('root'));
+console.log("====")
+MyReact.render(<Foo text="green" key="B" />, document.getElementById('root'));
+console.log("====")
+MyReact.render(<Foo text="blue" key="B" />, document.getElementById('root'));
+
 // Should reuse existing DOM
 // setTimeout(() => {
 //     MyReact.render(element4, document.getElementById('root'));
