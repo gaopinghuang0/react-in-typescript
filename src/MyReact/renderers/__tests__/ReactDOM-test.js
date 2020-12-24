@@ -56,4 +56,4 @@ describe('ReactDOM', () => {
     });
 
 
-})  
+})

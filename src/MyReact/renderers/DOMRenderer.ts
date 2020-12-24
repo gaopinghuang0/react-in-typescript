@@ -38,8 +38,11 @@ class TopLevelWrapper extends Component {
     }
 }
 
-export function render(nextElement: React.ReactNode, container: HTMLElement | null | undefined) {
-    if (container == null) return;
+export function render(nextElement: React.ReactNode, container: any) {
+    assert(
+        isValidContainer(container),
+        'render(...): Target container is not a DOM element.',
+    );
 
     // Wrap an element with type React.ReactNode into an React.ReactComponentElement
     const nextWrappedElement = createElement(
