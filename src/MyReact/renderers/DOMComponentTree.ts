@@ -1,5 +1,6 @@
 import { CompositeComponent } from "../reconciler/CompositeComponent";
 import { InternalComponent } from "../reconciler/InternalComponent";
+import { TextComponent } from "../reconciler/TextComponent";
 import { assert } from "../utils/assert";
 import { DOMComponent } from "./DOMComponent";
 import { DOMComponentFlags } from "./DOMComponentFlags";

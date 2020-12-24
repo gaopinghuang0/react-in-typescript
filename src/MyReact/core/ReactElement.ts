@@ -1,3 +1,4 @@
+import { REACT_ELEMENT_TYPE } from "../utils/ReactElementSymbol";
 
 const filteredProps = new Set(['key', 'ref', '__self', '__source']);
 
@@ -18,5 +19,5 @@ export function createElement(type: any, config: any, ...args: React.ReactNode[]
     } else if (args.length >= 2) {
         props.children = args;
     }
-    return { type, key, props }
+    return { type, key, props, $$typeof: REACT_ELEMENT_TYPE } as React.ReactElement
 }

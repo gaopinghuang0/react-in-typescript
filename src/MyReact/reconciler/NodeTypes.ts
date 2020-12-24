@@ -1,4 +1,3 @@
-import { assert } from "../utils/assert";
 import { isValidElement } from "../utils/isValidElement";
 
 export enum NodeTypes {
