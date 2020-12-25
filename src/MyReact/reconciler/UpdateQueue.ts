@@ -1,4 +1,5 @@
 import { Component } from "..";
+import { validateCallback } from "../renderers/validateCallback";
 import { CompositeComponent } from "./CompositeComponent";
 import { InstanceMap } from "./InstanceMap";
 import ReactUpdates from "./ReactUpdates";
@@ -35,7 +36,11 @@ const UpdateQueue = {
      * @param {object} completeState Next state.
      * @internal
      */
-    enqueueReplaceState: function (publicInstance: Component, completeState: object, callback: any) {
+    enqueueReplaceState(
+        publicInstance: Component,
+        completeState: object,
+        callback: any
+    ) {
         const internalInstance = InstanceMap.get(publicInstance) as CompositeComponent;
 
         if (!internalInstance) {
@@ -53,6 +58,31 @@ const UpdateQueue = {
         //     internalInstance._pendingCallbacks = [callback];
         //   }
         // }
+
+        ReactUpdates.enqueueUpdate(internalInstance);
+    },
+
+    /**
+     * Forces an update. This should only be invoked when it is known with
+     * certainty that we are **not** in a DOM transaction.
+     *
+     * You may want to call this when you know that some deeper aspect of the
+     * component's state has changed but `setState` was not called.
+     *
+     * This will not invoke `shouldComponentUpdate`, but it will invoke
+     * `componentWillUpdate` and `componentDidUpdate`.
+     *
+     * @param {ReactClass} publicInstance The instance that should rerender.
+     * @internal
+     */
+    enqueueForceUpdate: function (publicInstance: Component) {
+        const internalInstance = InstanceMap.get(publicInstance) as CompositeComponent;
+
+        if (!internalInstance) {
+            return;
+        }
+
+        internalInstance._pendingForceUpdate = true;
 
         ReactUpdates.enqueueUpdate(internalInstance);
     },
@@ -75,6 +105,41 @@ const UpdateQueue = {
         } else {
             internalInstance._pendingCallbacks = [callback];
         }
+        ReactUpdates.enqueueUpdate(internalInstance);
+    },
+
+
+    /**
+     * Enqueue a callback that will be executed after all the pending updates
+     * have processed.
+     *
+     * @param {ReactClass} publicInstance The instance to use as `this` context.
+     * @param {?function} callback Called after state is updated.
+     * @param {string} callerName Name of the calling function in the public API.
+     * @internal
+     */
+    enqueueCallback(
+        publicInstance: Component,
+        callback: any,
+        callerName: string) {
+        validateCallback(callback, callerName);
+        const internalInstance = InstanceMap.get(publicInstance) as CompositeComponent;
+
+        // Previously we would throw an error if we didn't have an internal
+        // instance. Since we want to make it a no-op instead, we mirror the same
+        // behavior we have in other enqueue* methods.
+        // We also need to ignore callbacks in componentWillMount. See
+        // enqueueUpdates.
+        if (!internalInstance) {
+            return null;
+        }
+
+        if (internalInstance._pendingCallbacks) {
+            internalInstance._pendingCallbacks.push(callback);
+        } else {
+            internalInstance._pendingCallbacks = [callback];
+        }
+
         ReactUpdates.enqueueUpdate(internalInstance);
     },
 };

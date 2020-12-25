@@ -1,4 +1,5 @@
 import UpdateQueue from "../reconciler/UpdateQueue";
+import { Updater } from "./Updater";
 
 export class Component<P = {}, S = {}> {
     isReactComponent = true;
@@ -9,25 +10,30 @@ export class Component<P = {}, S = {}> {
     };
     // TODO: add type Pick<S, K> to match the type in setState
     state: Readonly<S>;
+    updater: Updater;
 
-    constructor(props: Readonly<P> | P) {
+    constructor(props: Readonly<P> | P, updater: Updater) {
         this.props = props;
         this.state = {} as S;
         this.refs = {};
+        this.updater = updater;
     }
 
     setState<K extends keyof S>(
         state: ((prevState: S, props: Readonly<P>) => (Pick<S, K> | S | null)) | (Pick<S, K> | S | null),
         callback?: () => void
     ) {
-        UpdateQueue.enqueueSetState(this, state);
+        this.updater.enqueueSetState(this, state);
         if (callback) {
-            // TODO:
+            this.updater.enqueueCallback(this, callback, 'setState');
         }
     }
 
     forceUpdate(callback?: () => void) {
-
+        this.updater.enqueueForceUpdate(this);
+        if (callback) {
+            this.updater.enqueueCallback(this, callback, 'forceUpdate');
+        }
     }
 
     render(): React.ReactNode {

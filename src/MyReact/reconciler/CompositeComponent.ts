@@ -1,13 +1,13 @@
 import { isClass } from "../core/Component";
+import ReconcileTransaction from "../transactions/ReconcileTransaction";
+import { assert } from "../utils/assert";
+import { EmptyComponent } from "./EmptyComponent";
+import { InstanceMap } from "./InstanceMap";
 import { instantiateComponent } from "./instantiateComponent";
 import { InternalComponent } from "./InternalComponent";
-import { EmptyComponent } from "./EmptyComponent";
-import { shouldUpdateElement } from "./shouldUpdateElement";
-import Reconciler from './Reconciler'
-import { InstanceMap } from "./InstanceMap";
-import { assert } from "../utils/assert";
-import ReconcileTransaction from "../transactions/ReconcileTransaction";
 import { getNodeTypes, NodeTypes } from "./NodeTypes";
+import Reconciler from './Reconciler';
+import { shouldUpdateElement } from "./shouldUpdateElement";
 
 const _sharedEmptyComponent = new EmptyComponent();
 
@@ -26,7 +26,7 @@ export class CompositeComponent implements InternalComponent {
     _renderedNodeType: NodeTypes | null;
     _mountOrder: number;
     _pendingReplaceState: boolean;
-    _pendingForceState: boolean;
+    _pendingForceUpdate: boolean;
     _pendingCallbacks: Function[] | null;
 
     constructor(element: React.ReactComponentElement<any>) {
@@ -38,7 +38,7 @@ export class CompositeComponent implements InternalComponent {
         this._pendingElement = null;
         this._pendingStateQueue = null;
         this._pendingReplaceState = false;
-        this._pendingForceState = false;
+        this._pendingForceUpdate = false;
 
         this._renderedNodeType = null;
         this._renderedComponent = _sharedEmptyComponent;
@@ -61,8 +61,13 @@ export class CompositeComponent implements InternalComponent {
         let publicInstance;
         if (isClass(type)) {
             // Class Component
-            publicInstance = new type(props);
+            const updateQueue = transaction.getUpdateQueue();
+            publicInstance = new type(props, updateQueue);
+            // User may override the default constructor so that the props or updater 
+            // may not be set properly.
+            // Set them explicitly.
             publicInstance.props = props;
+            publicInstance.updater = updateQueue;
 
             // Store a reference from the instance back to the internal representation
             InstanceMap.set(publicInstance, this);
@@ -83,6 +88,8 @@ export class CompositeComponent implements InternalComponent {
 
         this._publicInstance = publicInstance;
         this._pendingStateQueue = null;
+        this._pendingForceUpdate = false;
+        this._pendingReplaceState = false;
 
         if (publicInstance.componentWillMount) {
             invokeLifeCycle(publicInstance, 'componentWillMount');
@@ -127,6 +134,8 @@ export class CompositeComponent implements InternalComponent {
 
         this._pendingElement = null;
         this._pendingStateQueue = null;
+        this._pendingForceUpdate = false;
+        this._pendingReplaceState = false;
 
         InstanceMap.delete(publicInstance);
     }
@@ -157,7 +166,7 @@ export class CompositeComponent implements InternalComponent {
                 transaction,
             )
         }
-        else if (this._pendingStateQueue !== null) {
+        else if (this._pendingStateQueue !== null || this._pendingForceUpdate) {
             this.updateComponent(transaction, this._currentElement, this._currentElement);
         } else {
             this._updateBatchNumber = null;
@@ -187,15 +196,18 @@ export class CompositeComponent implements InternalComponent {
         const nextState = this._processPendingState(nextProps);
 
         let shouldUpdate = true;
-        if (instance.shouldComponentUpdate) {
-            shouldUpdate = instance.shouldComponentUpdate(nextProps, nextState);
-        } else {
-            // TODO: use shallow equal for PureComponent
+        if (!this._pendingForceUpdate) {
+            if (instance.shouldComponentUpdate) {
+                shouldUpdate = instance.shouldComponentUpdate(nextProps, nextState);
+            } else {
+                // TODO: use shallow equal for PureComponent
+            }
         }
 
         this._updateBatchNumber = null;
         if (shouldUpdate) {
             // Will set `this.props`, `this.state`.
+            this._pendingForceUpdate = false;
             this._performComponentUpdate(
                 nextParentElement,
                 nextProps,
