@@ -9,6 +9,7 @@ import ReactUpdates from "../reconciler/ReactUpdates";
 import ReconcileTransaction from "../transactions/ReconcileTransaction";
 import UpdateQueue from "../reconciler/UpdateQueue";
 import { CompositeComponent } from "../reconciler/CompositeComponent";
+import { validateCallback } from "./validateCallback";
 
 const ROOT_KEY = "MyReactRootKey";
 let rootID = 1;
@@ -38,7 +39,9 @@ class TopLevelWrapper extends Component {
     }
 }
 
-export function render(nextElement: React.ReactNode, container: any) {
+export function render(nextElement: React.ReactNode, container: any, callback?: any) {
+    validateCallback(callback, 'ReactDOM.render');
+
     assert(
         isValidContainer(container),
         'render(...): Target container is not a DOM element.',
@@ -56,9 +59,9 @@ export function render(nextElement: React.ReactNode, container: any) {
     // Otherwise we'll assume this is an initial render.
     let instance: Component;
     if (isRoot(container)) {
-        instance = update(nextWrappedElement, container);
+        instance = update(nextWrappedElement, container, callback);
     } else {
-        instance = mount(nextWrappedElement, container);
+        instance = mount(nextWrappedElement, container, callback);
     }
 
     return instance;
@@ -87,7 +90,7 @@ function batchedMountComponentIntoContainer(
     )
 }
 
-function mount(nextElement: React.ReactComponentElement<any>, container: HTMLElement) {
+function mount(nextElement: React.ReactComponentElement<any>, container: HTMLElement, callback?: Function) {
     // Root component will be CompositeComponent since the root element is wrapped earlier.
     const rootComponent = instantiateComponent(nextElement) as CompositeComponent;
 
@@ -103,10 +106,13 @@ function mount(nextElement: React.ReactComponentElement<any>, container: HTMLEle
     saveInternalInstanceToNode(container, rootComponent);
 
     const publicInstance = rootComponent._renderedComponent.getPublicInstance();
+    if (callback) {
+        callback.call(publicInstance);
+    }
     return publicInstance;
 }
 
-function update(nextElement: React.ReactComponentElement<any>, container: HTMLElement) {
+function update(nextElement: React.ReactComponentElement<any>, container: HTMLElement, callback?: Function) {
     // Ensure we have a valid root node
     assert(container && isRoot(container));
 
@@ -118,7 +124,12 @@ function update(nextElement: React.ReactComponentElement<any>, container: HTMLEl
             prevRootComponent,
             nextElement,
         )
-        return prevRootComponent._renderedComponent.getPublicInstance();
+        const publicInstance = prevRootComponent._renderedComponent.getPublicInstance();
+        if (callback) {
+            const updateCallback = () => callback.call(publicInstance);
+            UpdateQueue.enqueueCallbackInternal(prevRootComponent, updateCallback);
+        }
+        return publicInstance;
     } else {
         // Unmount and then mount a new one
         unmount(container);

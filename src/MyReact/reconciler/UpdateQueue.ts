@@ -24,6 +24,39 @@ const UpdateQueue = {
         ReactUpdates.enqueueUpdate(internalInstance);
     },
 
+    /**
+     * Replaces all of the state. Always use this or `setState` to mutate state.
+     * You should treat `this.state` as immutable.
+     *
+     * There is no guarantee that `this.state` will be immediately updated, so
+     * accessing `this.state` after calling this method may return the old value.
+     *
+     * @param {ReactClass} publicInstance The instance that should rerender.
+     * @param {object} completeState Next state.
+     * @internal
+     */
+    enqueueReplaceState: function (publicInstance: Component, completeState: object, callback: any) {
+        const internalInstance = InstanceMap.get(publicInstance) as CompositeComponent;
+
+        if (!internalInstance) {
+            return;
+        }
+
+        internalInstance._pendingStateQueue = [completeState];
+        internalInstance._pendingReplaceState = true;
+
+        // // Future-proof 15.5
+        // if (callback !== undefined && callback !== null) {
+        //   if (internalInstance._pendingCallbacks) {
+        //     internalInstance._pendingCallbacks.push(callback);
+        //   } else {
+        //     internalInstance._pendingCallbacks = [callback];
+        //   }
+        // }
+
+        ReactUpdates.enqueueUpdate(internalInstance);
+    },
+
     enqueueElementInternal(
         internalInstance: CompositeComponent,
         nextElement: React.ReactComponentElement<any>
@@ -31,7 +64,19 @@ const UpdateQueue = {
         internalInstance._pendingElement = nextElement;
 
         ReactUpdates.enqueueUpdate(internalInstance);
-    }
+    },
+
+    enqueueCallbackInternal(
+        internalInstance: CompositeComponent,
+        callback: Function
+    ) {
+        if (internalInstance._pendingCallbacks) {
+            internalInstance._pendingCallbacks.push(callback);
+        } else {
+            internalInstance._pendingCallbacks = [callback];
+        }
+        ReactUpdates.enqueueUpdate(internalInstance);
+    },
 };
 
 export default UpdateQueue;

@@ -38,11 +38,23 @@ function runBatchedUpdates(transaction: ReactUpdatesFlushTransaction) {
     for (let i = 0; i < len; i++) {
         const component = dirtyComponents[i];
 
+        // If performUpdateIfNecessary happens to enqueue any new updates, we
+        // shouldn't execute the callbacks until the next render happens, so
+        // stash the callbacks first
+        const callbacks = component._pendingCallbacks;
+        component._pendingCallbacks = null;
+
         Reconciler.performUpdateIfNecessary(
             component,
             transaction.reconcileTransaction,
             updateBatchNumber
         );
+
+        if (callbacks) {
+            callbacks.forEach(callback => {
+                transaction.callbackQueue.enqueue(callback, component.getPublicInstance());
+            })
+        }
     }
 }
 

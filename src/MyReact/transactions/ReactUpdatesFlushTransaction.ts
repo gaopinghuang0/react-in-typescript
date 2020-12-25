@@ -1,4 +1,5 @@
 import ReactUpdates from "../reconciler/ReactUpdates";
+import CallbackQueue from "../utils/CallbackQueue";
 import ReconcileTransaction from "./ReconcileTransaction";
 import Transaction from "./Transaction";
 
@@ -12,6 +13,7 @@ class ReactUpdatesFlushTransaction extends Transaction {
         super();
         this.dirtyComponentsLength = null;
         this.reconcileTransaction = new ReactUpdates.ReconcileTransaction!()
+        this.callbackQueue = new CallbackQueue();
     }
 
     /** @override */
@@ -37,7 +39,15 @@ class ReactUpdatesFlushTransaction extends Transaction {
             },
         };
 
-        return [NESTED_UPDATES];
+        var UPDATE_QUEUEING = {
+            initialize: function () {
+                that.callbackQueue.reset();
+            },
+            close: function () {
+                that.callbackQueue.notifyAll();
+            },
+        };
+        return [NESTED_UPDATES, UPDATE_QUEUEING];
     }
 
     /** @override */

@@ -141,4 +141,15 @@ describe('DOMRenderer', () => {
     //     /* eslint-enable indent */
     //   });
 
+    it('fires the callback after a component is rendered', () => {
+        var callback = jest.fn();
+        var container = document.createElement('div');
+        ReactDOM.render(<div />, container, callback);
+        expect(callback.mock.calls.length).toBe(1);
+        ReactDOM.render(<div className="foo" />, container, callback);
+        expect(callback.mock.calls.length).toBe(2);
+        ReactDOM.render(<span />, container, callback);
+        expect(callback.mock.calls.length).toBe(3);
+    });
+
 });

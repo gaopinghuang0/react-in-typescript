@@ -25,16 +25,25 @@ export class CompositeComponent implements InternalComponent {
     _updateBatchNumber: number | null;
     _renderedNodeType: NodeTypes | null;
     _mountOrder: number;
+    _pendingReplaceState: boolean;
+    _pendingForceState: boolean;
+    _pendingCallbacks: Function[] | null;
 
     constructor(element: React.ReactComponentElement<any>) {
         this._currentElement = element;
-        this._renderedComponent = _sharedEmptyComponent;
         this._publicInstance = null;
-        this._pendingStateQueue = null;
-        this._pendingElement = null;
-        this._updateBatchNumber = null;
-        this._renderedNodeType = null;
         this._mountOrder = 0;
+
+        this._updateBatchNumber = null;
+        this._pendingElement = null;
+        this._pendingStateQueue = null;
+        this._pendingReplaceState = false;
+        this._pendingForceState = false;
+
+        this._renderedNodeType = null;
+        this._renderedComponent = _sharedEmptyComponent;
+
+        this._pendingCallbacks = null;
     }
 
     getPublicInstance() {
