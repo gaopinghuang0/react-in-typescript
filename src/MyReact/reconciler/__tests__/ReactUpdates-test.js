@@ -280,4 +280,230 @@ describe('ReactUpdates', () => {
         expect(aUpdated).toBe(true);
     });
 
+    it('should flush updates in the correct order across roots', () => {
+        var instances = [];
+        var updates = [];
+
+        class MockComponent extends MyReact.Component {
+            render() {
+                updates.push(this.props.depth);
+                return <div />;
+            }
+
+            componentDidMount() {
+                instances.push(this);
+                if (this.props.depth < this.props.count) {
+                    ReactDOM.render(
+                        <MockComponent
+                            depth={this.props.depth + 1}
+                            count={this.props.count}
+                        />,
+                        ReactDOM.findDOMNode(this),
+                    );
+                }
+            }
+        }
+
+        ReactTestUtils.renderIntoDocument(<MockComponent depth={0} count={2} />);
+
+        expect(updates).toEqual([0, 1, 2]);
+
+        ReactUpdates.batchedUpdates(function () {
+            // Simulate update on each component from top to bottom.
+            instances.forEach(function (instance) {
+                instance.forceUpdate();
+            });
+        });
+
+        expect(updates).toEqual([0, 1, 2, 0, 1, 2]);
+    });
+
+    it('should queue nested updates', () => {
+        // See https://github.com/facebook/react/issues/1147
+
+        class X extends MyReact.Component {
+            state = { s: 0 };
+
+            render() {
+                if (this.state.s === 0) {
+                    return (
+                        <div>
+                            <span>0</span>
+                        </div>
+                    );
+                } else {
+                    return <div>1</div>;
+                }
+            }
+
+            go = () => {
+                this.setState({ s: 1 });
+                this.setState({ s: 0 });
+                this.setState({ s: 1 });
+            };
+        }
+
+        class Y extends MyReact.Component {
+            render() {
+                return (
+                    <div>
+                        <Z />
+                    </div>
+                );
+            }
+        }
+
+        class Z extends MyReact.Component {
+            render() {
+                return <div />;
+            }
+
+            componentWillUpdate() {
+                x.go();
+            }
+        }
+
+        var x;
+        var y;
+
+        x = ReactTestUtils.renderIntoDocument(<X />);
+        y = ReactTestUtils.renderIntoDocument(<Y />);
+        expect(ReactDOM.findDOMNode(x).textContent).toBe('0');
+
+        y.forceUpdate();
+        expect(ReactDOM.findDOMNode(x).textContent).toBe('1');
+    });
+
+    it('should queue updates from during mount', () => {
+        // See https://github.com/facebook/react/issues/1353
+        var a;
+
+        class A extends MyReact.Component {
+            state = { x: 0 };
+
+            componentWillMount() {
+                a = this;
+            }
+
+            render() {
+                return <div>A{this.state.x}</div>;
+            }
+        }
+
+        class B extends MyReact.Component {
+            componentWillMount() {
+                a.setState({ x: 1 });
+            }
+
+            render() {
+                return <div />;
+            }
+        }
+
+        ReactUpdates.batchedUpdates(function () {
+            ReactTestUtils.renderIntoDocument(
+                <div>
+                    <A />
+                    <B />
+                </div>,
+            );
+        });
+
+        expect(a.state.x).toBe(1);
+        expect(ReactDOM.findDOMNode(a).textContent).toBe('A1');
+    });
+
+    it('calls componentWillReceiveProps setState callback properly', () => {
+        var callbackCount = 0;
+
+        class A extends MyReact.Component {
+            state = { x: this.props.x };
+
+            componentWillReceiveProps(nextProps) {
+                var newX = nextProps.x;
+                this.setState({ x: newX }, function () {
+                    // State should have updated by the time this callback gets called
+                    expect(this.state.x).toBe(newX);
+                    callbackCount++;
+                });
+            }
+
+            render() {
+                return <div>{this.state.x}</div>;
+            }
+        }
+
+        var container = document.createElement('div');
+        ReactDOM.render(<A x={1} />, container);
+        ReactDOM.render(<A x={2} />, container);
+        expect(callbackCount).toBe(1);
+    });
+
+    it('does not call render after a component as been deleted', () => {
+        var renderCount = 0;
+        var componentB = null;
+
+        class B extends MyReact.Component {
+            state = { updates: 0 };
+
+            componentDidMount() {
+                componentB = this;
+            }
+
+            render() {
+                renderCount++;
+                return <div />;
+            }
+        }
+
+        class A extends MyReact.Component {
+            state = { showB: true };
+
+            render() {
+                return this.state.showB ? <B /> : <div />;
+            }
+        }
+
+        var component = ReactTestUtils.renderIntoDocument(<A />);
+
+        ReactUpdates.batchedUpdates(function () {
+            // B will have scheduled an update but the batching should ensure that its
+            // update never fires.
+            componentB.setState({ updates: 1 });
+            component.setState({ showB: false });
+        });
+
+        expect(renderCount).toBe(1);
+    });
+
+    it('throws in setState if the update callback is not a function', () => {
+        function Foo() {
+            this.a = 1;
+            this.b = 2;
+        }
+
+        class A extends MyReact.Component {
+            state = {};
+
+            render() {
+                return <div />;
+            }
+        }
+
+        var component = ReactTestUtils.renderIntoDocument(<A />);
+
+        expect(() => component.setState({}, 'no')).toThrowError(
+            'setState(...): Expected the last optional `callback` argument ' +
+            'to be a function. Instead received: string.',
+        );
+        expect(() => component.setState({}, {})).toThrowError(
+            'setState(...): Expected the last optional `callback` argument ' +
+            'to be a function. Instead received: Object.',
+        );
+        expect(() => component.setState({}, new Foo())).toThrowError(
+            'setState(...): Expected the last optional `callback` argument ' +
+            'to be a function. Instead received: Foo (keys: a, b).',
+        );
+    });
+
 })

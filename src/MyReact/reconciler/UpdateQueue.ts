@@ -121,7 +121,8 @@ const UpdateQueue = {
     enqueueCallback(
         publicInstance: Component,
         callback: any,
-        callerName: string) {
+        callerName: string
+    ) {
         validateCallback(callback, callerName);
         const internalInstance = InstanceMap.get(publicInstance) as CompositeComponent;
 
