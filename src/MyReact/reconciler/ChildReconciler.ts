@@ -24,7 +24,8 @@ const ChildReconciler = {
             // If there is no internal instance under this index,
             // a child has been appended to the end. Create a new
             // internal instance, mount it, and use its node.
-            if (!prevChildren[i]) {
+            // Note that prevChildren[i] may be '0' or 0, which are still valid.
+            if (prevChildren[i] == null) {
                 let nextChild = instantiateComponent(nextChildren[i]);
                 let node = Reconciler.mountComponent(nextChild, transaction);
 

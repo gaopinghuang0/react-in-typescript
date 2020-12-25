@@ -1,6 +1,5 @@
 
 import * as MyReact from '../..';
-import UpdateQueue from '../UpdateQueue';
 
 const ReactDOM = MyReact;
 let TestComponent;
