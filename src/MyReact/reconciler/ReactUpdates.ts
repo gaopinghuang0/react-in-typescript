@@ -1,4 +1,5 @@
 import ReactUpdatesFlushTransaction from "../transactions/ReactUpdatesFlushTransaction";
+import ReconcileTransaction from "../transactions/ReconcileTransaction";
 import { TransactionType } from "../transactions/Transaction";
 import { assert } from "../utils/assert";
 import { BatchingStrategy } from "./BatchingStrategy";
@@ -68,7 +69,7 @@ function ensureInjected() {
 
 const ReactUpdates = {
     // Needs injection.
-    ReconcileTransaction: null as null | TransactionType,
+    ReconcileTransaction: null as null | typeof ReconcileTransaction,
 
     dirtyComponents: [] as CompositeComponent[],
 
@@ -99,8 +100,8 @@ const ReactUpdates = {
     },
 
     injection: {
-        injectReconcileTransaction(ReconcileTransaction: TransactionType) {
-            ReactUpdates.ReconcileTransaction = ReconcileTransaction;
+        injectReconcileTransaction(_ReconcileTransaction: typeof ReconcileTransaction) {
+            ReactUpdates.ReconcileTransaction = _ReconcileTransaction;
         },
         injectBatchingStrategy(_batchingStrategy: BatchingStrategy) {
             batchingStrategy = _batchingStrategy;

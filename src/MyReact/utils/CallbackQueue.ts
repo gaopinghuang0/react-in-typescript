@@ -18,12 +18,8 @@ class CallbackQueue<T> {
 
     /**
      * Enqueues a callback to be invoked when `notifyAll` is invoked.
-     *
-     * @param {function} callback Invoked when `notifyAll` is invoked.
-     * @param {?object} context Context to call `callback` with.
-     * @internal
      */
-    enqueue(callback: () => void, context: T) {
+    enqueue(callback: Function, context: T) {
         this._callbacks = this._callbacks || [];
         this._callbacks.push(callback);
         this._contexts = this._contexts || [];
@@ -33,8 +29,6 @@ class CallbackQueue<T> {
     /**
      * Invokes all enqueued callbacks and clears the queue. This is invoked after
      * the DOM representation of a component has been created or updated.
-     *
-     * @internal
      */
     notifyAll() {
         var callbacks = this._callbacks;

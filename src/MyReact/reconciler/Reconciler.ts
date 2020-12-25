@@ -30,7 +30,9 @@ const Reconciler = {
 
         if (nextElement === prevElement) {
             // There is no need to update the same element.
-            console.log("Early stop!");
+            if (typeof nextElement !== 'string') {
+                console.log("Early stop on other types of element!");
+            }
             return;
         }
         internalInstance.receive(nextElement, transaction);
@@ -42,7 +44,12 @@ const Reconciler = {
         updateBatchNumber: number
     ) {
         if (internalInstance._updateBatchNumber !== updateBatchNumber) {
-            console.warn("Unexpected batch number");
+            // The component's enqueued batch number should always be the current
+            // batch or the following one.
+            if (!(internalInstance._updateBatchNumber == null ||
+                internalInstance._updateBatchNumber === updateBatchNumber + 1)) {
+                console.warn("Unexpected batch number");
+            }
         }
 
         internalInstance.performUpdateIfNecessary(transaction);

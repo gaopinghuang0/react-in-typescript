@@ -1,4 +1,4 @@
-import UpdateQueue from "../reconciler/UpdateQueue";
+import NoopUpdateQueue from "./NoopUpdater";
 import { Updater } from "./Updater";
 
 export class Component<P = {}, S = {}> {
@@ -12,11 +12,11 @@ export class Component<P = {}, S = {}> {
     state: Readonly<S>;
     updater: Updater;
 
-    constructor(props: Readonly<P> | P, updater: Updater) {
+    constructor(props: Readonly<P> | P, updater?: Updater) {
         this.props = props;
         this.state = {} as S;
         this.refs = {};
-        this.updater = updater;
+        this.updater = updater || NoopUpdateQueue;
     }
 
     setState<K extends keyof S>(

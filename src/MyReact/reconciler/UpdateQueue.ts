@@ -50,14 +50,14 @@ const UpdateQueue = {
         internalInstance._pendingStateQueue = [completeState];
         internalInstance._pendingReplaceState = true;
 
-        // // Future-proof 15.5
-        // if (callback !== undefined && callback !== null) {
-        //   if (internalInstance._pendingCallbacks) {
-        //     internalInstance._pendingCallbacks.push(callback);
-        //   } else {
-        //     internalInstance._pendingCallbacks = [callback];
-        //   }
-        // }
+        // Future-proof 15.5
+        if (callback !== undefined && callback !== null) {
+            if (internalInstance._pendingCallbacks) {
+                internalInstance._pendingCallbacks.push(callback);
+            } else {
+                internalInstance._pendingCallbacks = [callback];
+            }
+        }
 
         ReactUpdates.enqueueUpdate(internalInstance);
     },
@@ -98,7 +98,7 @@ const UpdateQueue = {
 
     enqueueCallbackInternal(
         internalInstance: CompositeComponent,
-        callback: Function
+        callback: VoidFunction
     ) {
         if (internalInstance._pendingCallbacks) {
             internalInstance._pendingCallbacks.push(callback);

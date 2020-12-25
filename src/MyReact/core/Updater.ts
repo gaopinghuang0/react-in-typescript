@@ -5,5 +5,4 @@ export interface Updater {
     enqueueSetState: (publicInstance: Component, partialState: any) => void;
     enqueueForceUpdate: (publicInstance: Component) => void;
     enqueueReplaceState: (publicInstance: Component, completeState: object) => void;
-
 }

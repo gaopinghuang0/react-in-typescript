@@ -1,3 +1,4 @@
+import { prependListener } from "process";
 import { isClass } from "../core/Component";
 import ReconcileTransaction from "../transactions/ReconcileTransaction";
 import { assert } from "../utils/assert";
@@ -15,6 +16,7 @@ const _sharedEmptyComponent = new EmptyComponent();
 
 let nextMountID = 1;
 
+
 // Internal wrapper for Class component and functional component
 export class CompositeComponent implements InternalComponent {
     _currentElement: React.ReactComponentElement<any>;
@@ -27,7 +29,7 @@ export class CompositeComponent implements InternalComponent {
     _mountOrder: number;
     _pendingReplaceState: boolean;
     _pendingForceUpdate: boolean;
-    _pendingCallbacks: Function[] | null;
+    _pendingCallbacks: VoidFunction[] | null;
 
     constructor(element: React.ReactComponentElement<any>) {
         this._currentElement = element;
@@ -112,8 +114,11 @@ export class CompositeComponent implements InternalComponent {
         this._renderedComponent = child;
         const node = Reconciler.mountComponent(child, transaction);
 
-        if (publicInstance) {
-            invokeLifeCycle(publicInstance, 'componentDidMount');
+        if (publicInstance.componentDidMount) {
+            transaction.getReactMountReady().enqueue(
+                publicInstance.componentDidMount,
+                publicInstance
+            );
         }
 
         return node;
@@ -227,21 +232,28 @@ export class CompositeComponent implements InternalComponent {
     private _processPendingState(props: any) {
         const instance = this._publicInstance;
         const queue = this._pendingStateQueue;
+        const replace = this._pendingReplaceState;
+        this._pendingReplaceState = false;
         this._pendingStateQueue = null;
 
         if (!queue) {
             return instance.state;
         }
 
-        const nextState = Object.assign({}, instance.state);
-        queue.forEach(partialState => {
+        if (replace && queue.length === 1) {
+            return queue[0];
+        }
+
+        const nextState = Object.assign({}, replace ? queue[0] : instance.state);
+        for (let i = replace ? 1 : 0; i < queue.length; i++) {
+            const partial = queue[i];
             Object.assign(
                 nextState,
-                typeof partialState === 'function'
-                    ? partialState.call(instance, nextState, props)
-                    : partialState
-            );
-        })
+                typeof partial === 'function'
+                    ? partial.call(instance, nextState, props)
+                    : partial
+            )
+        }
 
         return nextState;
     }
@@ -272,7 +284,16 @@ export class CompositeComponent implements InternalComponent {
 
         this._updateRenderedComponent(transaction, nextElement);
 
-        invokeLifeCycle(instance, 'componentDidUpdate', prevProps, prevState);
+        if (hasComponentDidUpdate) {
+            transaction.getReactMountReady().enqueue(
+                instance.componentDidUpdate.bind(
+                    instance,
+                    prevProps,
+                    prevState
+                ),
+                instance
+            )
+        }
     }
 
     /**

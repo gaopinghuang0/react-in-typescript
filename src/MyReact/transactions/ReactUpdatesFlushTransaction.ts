@@ -6,7 +6,7 @@ import Transaction from "./Transaction";
 
 class ReactUpdatesFlushTransaction extends Transaction {
     dirtyComponentsLength: number | null;
-    callbackQueue: any;
+    callbackQueue: CallbackQueue<any>;
     reconcileTransaction: ReconcileTransaction;
 
     constructor() {
