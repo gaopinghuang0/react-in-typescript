@@ -3,18 +3,18 @@
   * [x] Understand transaction.wrappers
   * [x] Support transaction
   * [ ] UnmountComponent in a batch
-* [ ] Support callbacks
+* [x] Support callbacks
 * [ ] Implement real virtual diff algorithm
 * [ ] Support Events
-* [ ] Support Context?
-* [ ] Support refs?
-* [ ] Add StatelessComponent to satisfy the assert(instance != null) in CompositeComponent.updateComponent().
+* [ ] ~~Support Context?~~
+* [ ] ~~Support refs?~~
+* [ ] ~~Add StatelessComponent to satisfy the assert(instance != null) in CompositeComponent.updateComponent().~~
 
 * [ ] Add tests
   * [ ] ReactComponentLifeCycle-test
   * [ ] ReactCompositeComponent-test
-  * [ ] ReactCompositeComponentState-test
-  * [ ] ReactUpdates-test
+  * [x] ReactCompositeComponentState-test
+  * [x] ReactUpdates-test
   * [ ] ReactMultiChild-test
 
 ## Next step
